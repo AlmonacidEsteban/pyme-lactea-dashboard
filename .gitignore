@@ -1,4 +1,32 @@
-venv/
-db.sqlite3
-*.pyc
+# Python/Django
 __pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# Entornos/secretos
+.env
+**/.env
+.env.local
+.env.*.local
+
+# Node/React (futuro)
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+.parcel-cache/
+.next/
+
+# VSCode
+.vscode/
+
+# Docker
+**/tmp/
