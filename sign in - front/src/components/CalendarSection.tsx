@@ -3,6 +3,8 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Plus, Calendar, Clock, Users, Video, MapPin } from "lucide-react";
 
+ // ahora esta hardcodeado pero mas adelante hay que implementarlo con una API
+
 export function CalendarSection() {
   const todayEvents = [
     {
