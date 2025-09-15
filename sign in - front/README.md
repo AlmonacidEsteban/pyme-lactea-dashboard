@@ -1,11 +1,11 @@
 
-  # Web App Wireframe
+  # Proyecto mi PyME
 
-  This is a code bundle for EnterprisePro. 
+  Este es un paquete de codigos para EnterprisePro. 
 
-  ## How to run the code
+  ## Cómo correr el código
 
-  Run `npm i` to install the dependencies.
+  Run `npm i` para instalar las dependencias 
 
-  Run `npm run dev` to start the development server.
+  Run `npm run dev` para iniciar el servidor de desarrollo.
   
