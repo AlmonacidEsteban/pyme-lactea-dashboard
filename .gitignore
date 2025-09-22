@@ -30,4 +30,6 @@ build/
 
 # Docker
 **/tmp/
+# Mi archivo personal
+mis_mascotas.py
 
