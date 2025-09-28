@@ -33,3 +33,22 @@ build/
 # Mi archivo personal
 mis_mascotas.py
 
+# Archivos de instalación y temporales
+*.msi
+*.exe
+*.stackdump
+*.tmp
+*.temp
+
+# Logs adicionales
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
