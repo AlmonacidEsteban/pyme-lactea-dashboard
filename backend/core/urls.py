@@ -1,4 +1,4 @@
-﻿"""
+"""
 URL configuration for core project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -385,6 +385,11 @@ urlpatterns = [
     path("", home),
     path("demo/", demo_dashboard),
     path('admin/', admin.site.urls),
+    
+    # API de autenticación
+    path("api/auth/", include("authentication.urls")),
+    
+    # APIs de módulos
     path("api/clientes/", include("clientes.urls")),
     path("api/proveedores/", include("proveedores.urls")),
     path("api/rrhh/", include("recursos_humanos.urls")),
