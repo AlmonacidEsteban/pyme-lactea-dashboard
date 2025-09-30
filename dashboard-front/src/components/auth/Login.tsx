@@ -83,6 +83,17 @@ export default function Login({ onSwitchToSignUp }: LoginProps) {
             <p className="text-gray-600 mt-2">
               Gestiona tu negocio lácteo de manera eficiente
             </p>
+            {!import.meta.env.DEV && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600">🎯</span>
+                  <span className="text-blue-800 font-medium text-sm">Modo Demo</span>
+                </div>
+                <p className="text-blue-700 text-xs mt-1">
+                  Puedes iniciar sesión con cualquier credencial para probar la plataforma.
+                </p>
+              </div>
+            )}
           </CardHeader>
 
           <CardContent className="space-y-6">

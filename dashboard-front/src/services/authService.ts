@@ -10,8 +10,76 @@ import {
 import { API_CONFIG, buildApiUrl, getAuthHeaders, DEFAULT_HEADERS } from '../config/api';
 
 class AuthService {
+  private isProduction = !import.meta.env.DEV;
+
+  // Método para simular respuesta de autenticación en modo demo
+  private createDemoAuthResponse(userData: Partial<User>): AuthResponse {
+    const demoUser: User = {
+      id: Math.floor(Math.random() * 1000),
+      username: userData.username || 'demo_user',
+      email: userData.email || 'demo@example.com',
+      first_name: userData.first_name || 'Demo',
+      last_name: userData.last_name || 'User',
+      full_name: `${userData.first_name || 'Demo'} ${userData.last_name || 'User'}`,
+      phone_number: '',
+      company_name: 'Empresa Demo',
+      company_type: 'Láctea',
+      position: 'Administrador',
+      profile_picture: null,
+      is_verified: true,
+      date_joined: new Date().toISOString(),
+      last_login: new Date().toISOString(),
+      profile: {
+        id: 1,
+        company_address: '',
+        company_city: '',
+        company_state: '',
+        company_country: '',
+        company_postal_code: '',
+        tax_id: '',
+        website: '',
+        timezone: 'America/Lima',
+        language: 'es',
+        currency: 'PEN',
+        email_notifications: true,
+        sms_notifications: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user: 1
+      }
+    };
+
+    const demoTokens = {
+      access: 'demo_access_token_' + Date.now(),
+      refresh: 'demo_refresh_token_' + Date.now()
+    };
+
+    return {
+      message: 'Autenticación exitosa (Modo Demo)',
+      user: demoUser,
+      tokens: demoTokens
+    };
+  }
   // Login de usuario
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    // En producción, usar modo demo
+    if (this.isProduction) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const demoResponse = this.createDemoAuthResponse({
+            username: credentials.identifier,
+            email: credentials.identifier.includes('@') ? credentials.identifier : 'demo@example.com'
+          });
+          
+          // Guardar tokens en localStorage
+          localStorage.setItem('access_token', demoResponse.tokens.access);
+          localStorage.setItem('refresh_token', demoResponse.tokens.refresh);
+          
+          resolve(demoResponse);
+        }, 1000); // Simular delay de red
+      });
+    }
+
     try {
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN), {
         method: 'POST',
@@ -40,6 +108,26 @@ class AuthService {
 
   // Registro de usuario
   async register(userData: RegisterData): Promise<AuthResponse> {
+    // En producción, usar modo demo
+    if (this.isProduction) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const demoResponse = this.createDemoAuthResponse({
+            username: userData.username,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name
+          });
+          
+          // Guardar tokens en localStorage
+          localStorage.setItem('access_token', demoResponse.tokens.access);
+          localStorage.setItem('refresh_token', demoResponse.tokens.refresh);
+          
+          resolve(demoResponse);
+        }, 1500); // Simular delay de red un poco más largo para registro
+      });
+    }
+
     try {
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER), {
         method: 'POST',

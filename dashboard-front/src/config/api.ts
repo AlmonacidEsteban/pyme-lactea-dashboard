@@ -1,6 +1,18 @@
 // Configuración de la API
+const getBaseURL = () => {
+  // En desarrollo, usar el servidor local
+  if (import.meta.env.DEV) {
+    return 'http://127.0.0.1:8000/api';
+  }
+  
+  // En producción, usar una URL de backend de producción
+  // Por ahora, como no tenemos backend desplegado, usaremos una URL de demo
+  // Puedes cambiar esto por tu backend de producción cuando esté disponible
+  return 'https://jsonplaceholder.typicode.com'; // URL temporal para demo
+};
+
 export const API_CONFIG = {
-  BASE_URL: 'http://127.0.0.1:8000/api',
+  BASE_URL: getBaseURL(),
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/auth/login/',

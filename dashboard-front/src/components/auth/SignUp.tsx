@@ -178,6 +178,17 @@ export function SignUp({ onBackToLogin }: SignUpProps) {
               <p className="text-muted-foreground text-sm">
                 Registra tu PyME láctea
               </p>
+              {!import.meta.env.DEV && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                    <span className="text-blue-800 font-medium text-sm">Modo Demo</span>
+                  </div>
+                  <p className="text-blue-700 text-xs mt-1">
+                    Esta es una versión de demostración. Puedes registrarte con cualquier información para probar la plataforma.
+                  </p>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-3 pb-4">
               <form onSubmit={handleSubmit} className="space-y-3">
