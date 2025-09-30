@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.urls import include, path
 from django.utils.html import escape
@@ -381,10 +381,16 @@ def demo_dashboard(request):
     return HttpResponse(html)
 
 
+def health_check(request):
+    """Endpoint de health check para Railway y otros servicios"""
+    return JsonResponse({"status": "healthy", "message": "Mi Pyme Láctea API is running"})
+
+
 urlpatterns = [
     path("", home),
     path("demo/", demo_dashboard),
     path('admin/', admin.site.urls),
+    path("api/health/", health_check, name="health_check"),
     
     # API de autenticación
     path("api/auth/", include("authentication.urls")),
