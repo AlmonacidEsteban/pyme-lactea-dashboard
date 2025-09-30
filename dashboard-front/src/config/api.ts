@@ -5,10 +5,8 @@ const getBaseURL = () => {
     return 'http://127.0.0.1:8000/api';
   }
   
-  // En producción, usar una URL de backend de producción
-  // Por ahora, como no tenemos backend desplegado, usaremos una URL de demo
-  // Puedes cambiar esto por tu backend de producción cuando esté disponible
-  return 'https://jsonplaceholder.typicode.com'; // URL temporal para demo
+  // En producción, usar el backend desplegado en Render
+  return 'https://pyme-lactea-backend.onrender.com/api';
 };
 
 export const API_CONFIG = {

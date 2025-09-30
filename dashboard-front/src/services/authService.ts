@@ -10,7 +10,8 @@ import {
 import { API_CONFIG, buildApiUrl, getAuthHeaders, DEFAULT_HEADERS } from '../config/api';
 
 class AuthService {
-  private isProduction = !import.meta.env.DEV;
+  // Cambiar a false para usar el backend real en lugar del modo demo
+  private isProduction = false;
 
   // Método para simular respuesta de autenticación en modo demo
   private createDemoAuthResponse(userData: Partial<User>): AuthResponse {
