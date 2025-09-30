@@ -4,8 +4,8 @@ import { defineConfig } from 'vite';
   import path from 'path';
 
   export default defineConfig({
-  plugins: [react()],
-  base: '/pyme-lactea-dashboard/',
+plugins: [react()],
+base: '/',
   resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
@@ -55,7 +55,8 @@ import { defineConfig } from 'vite';
       outDir: 'build',
     },
     server: {
-      port: 3000,
-      open: true,
-    },
+    port: 3000,
+    open: true,
+    base: '/',
+  },
   });
