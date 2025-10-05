@@ -10,8 +10,8 @@ import {
 import { API_CONFIG, buildApiUrl, getAuthHeaders, DEFAULT_HEADERS } from '../config/api';
 
 class AuthService {
-  // Cambiar a false para usar el backend real en lugar del modo demo
-  private isProduction = false;
+  // Usar variable de entorno para determinar si estamos en producción
+  private isProduction = import.meta.env.VITE_APP_ENV === 'production' || import.meta.env.PROD;
 
   // Método para simular respuesta de autenticación en modo demo
   private createDemoAuthResponse(userData: Partial<User>): AuthResponse {

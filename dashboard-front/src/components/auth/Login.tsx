@@ -18,7 +18,7 @@ export default function Login({ onSwitchToSignUp }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
-  const { login, demoLogin, authState, clearError } = useAuth();
+  const { login, authState, clearError } = useAuth();
 
   // Limpiar errores cuando el componente se monta
   React.useEffect(() => {
@@ -54,20 +54,7 @@ export default function Login({ onSwitchToSignUp }: LoginProps) {
     }
   };
 
-  const handleDemoLogin = async (type: 'restaurant' | 'retail' | 'services') => {
-    clearError();
-    
-    try {
-      console.log('🎯 Demo Login: Iniciando login demo...', type);
-      await demoLogin(type);
-      console.log('✅ Demo Login: Completado exitosamente');
-      
-      // La redirección será manejada automáticamente por AuthContext y App.tsx
-      // cuando el estado de autenticación cambie a true
-    } catch (error) {
-      console.error('❌ Demo Login: Error en el proceso:', error);
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -218,50 +205,20 @@ export default function Login({ onSwitchToSignUp }: LoginProps) {
 
             <Separator />
 
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600 text-center">
-                Cuentas de demostración:
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDemoLogin('restaurant')}
-                  className="text-xs"
-                  disabled={authState.isLoading}
-                >
-                  🍽️ Restaurante
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDemoLogin('retail')}
-                  className="text-xs"
-                  disabled={authState.isLoading}
-                >
-                  🛍️ Retail
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDemoLogin('services')}
-                  className="text-xs"
-                  disabled={authState.isLoading}
-                >
-                  🔧 Servicios
-                </Button>
-              </div>
-            </div>
-
-            <Separator />
-
             <div className="text-center">
-              <p className="text-sm text-gray-600">
-                ¿No tienes una cuenta?{' '}
-                <button
-                  onClick={onSwitchToSignUp}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Regístrate aquí
-                </button>
+              <p className="text-sm text-gray-600 mb-4">
+                ¿No tienes una cuenta?
               </p>
+              <button
+                onClick={onSwitchToSignUp}
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border-2 border-emerald-400"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                ✨ Crear cuenta nueva
+              </button>
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
