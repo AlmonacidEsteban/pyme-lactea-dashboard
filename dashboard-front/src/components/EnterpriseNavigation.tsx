@@ -30,14 +30,14 @@ interface NavigationProps {
 export function EnterpriseNavigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
   const navigationItems = [
     { id: 'dashboard', label: 'Director del Panel', icon: LayoutDashboard },
-    { id: 'team', label: 'Equipo', icon: Users },
+    { id: 'team', label: 'Recursos Humanos', icon: UserCheck },
     { id: 'purchases', label: 'Compras', icon: ShoppingCart },
     { id: 'production', label: 'Centro de Producción', icon: Factory },
     { id: 'products', label: 'Productos', icon: Package },
     { id: 'suppliers', label: 'Proveedores', icon: Truck },
     { id: 'sales', label: 'Ventas', icon: DollarSign },
     { id: 'finances', label: 'Finanzas', icon: BarChart3 },
-    { id: 'clients', label: 'Clientes', icon: UserCheck },
+    { id: 'clients', label: 'Clientes', icon: Users },
     { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
     { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'reports', label: 'Informes', icon: FileText },

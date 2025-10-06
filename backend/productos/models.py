@@ -4,7 +4,35 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 
+class Marca(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "marca"
+        verbose_name_plural = "marcas"
+    
+    def __str__(self):
+        return self.nombre
+
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "categoría"
+        verbose_name_plural = "categorías"
+    
+    def __str__(self):
+        return self.nombre
+
+
 class Producto(models.Model):
+    marca = models.ForeignKey(Marca, on_delete=models.PROTECT, null=True, blank=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, null=True, blank=True)
     nombre = models.CharField(max_length=120)
     sku = models.CharField(max_length=50, unique=True, blank=True)
     descripcion = models.TextField(blank=True)

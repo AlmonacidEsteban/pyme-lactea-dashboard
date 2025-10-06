@@ -32,7 +32,15 @@ export const API_CONFIG = {
     PRODUCTOS: '/productos/',
     VENTAS: '/ventas/',
     COMPRAS: '/compras/',
-    RRHH: '/rrhh/',
+    RRHH: {
+      BASE: '/rrhh',
+      EMPLEADOS: '/rrhh/empleados/',
+      EQUIPOS: '/rrhh/equipos/',
+      ROLES: '/rrhh/roles/',
+      PAGOS: '/rrhh/pagos/',
+      AUDITORIA_EQUIPOS: '/rrhh/auditoria-equipos/',
+      AUDITORIA_EMPLEADOS: '/rrhh/auditoria-empleados/',
+    },
     FINANZAS: '/finanzas/',
   }
 };

@@ -2,15 +2,16 @@ from decimal import Decimal, InvalidOperation
 
 from django.db.models import F
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Producto
-from .serializers import ProductoSerializer
+from .models import Producto, Marca, Categoria
+from .serializers import ProductoSerializer, MarcaSerializer, CategoriaSerializer
 
 
 class ProductoViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.AllowAny]
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -60,3 +61,23 @@ class ProductoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return cantidad
+
+
+class MarcaViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.AllowAny]
+    queryset = Marca.objects.filter(activo=True)
+    serializer_class = MarcaSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["nombre"]
+    ordering_fields = ["nombre"]
+    ordering = ["nombre"]
+
+
+class CategoriaViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.AllowAny]
+    queryset = Categoria.objects.filter(activo=True)
+    serializer_class = CategoriaSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["nombre"]
+    ordering_fields = ["nombre"]
+    ordering = ["nombre"]

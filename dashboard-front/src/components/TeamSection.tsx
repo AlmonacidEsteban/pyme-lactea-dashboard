@@ -1,116 +1,239 @@
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { CustomModal } from "./ui/CustomModal";
+// Removed AlertDialog import - using CustomModal instead
+import { toast } from "sonner";
 import { 
   Users, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Calendar,
-  Clock,
+  Plus,
   Factory,
   Truck,
   UserCheck,
-  DollarSign
+  ShoppingCart,
+  Loader2
 } from "lucide-react";
+import { EquiposList } from './rrhh/EquiposList';
+import { EquipoForm } from './rrhh/EquipoForm';
+import { rrhhService } from '../services/rrhhService';
+import { 
+  EquipoList, 
+  Equipo, 
+  EquipoFilters, 
+  CreateEquipoData, 
+  UpdateEquipoData 
+} from '../types/rrhh';
 
 export function TeamSection() {
-  const productionTeam = [
-    {
-      name: "Carlos Mendoza",
-      role: "Maestro Quesero",
-      shift: "Turno Mañana (6:00-14:00)",
-      experience: "15 años",
-      specialty: "Muzzarella y Ricota",
-      status: "Activo",
-      hourlyRate: "$25/hora"
-    },
-    {
-      name: "María González",
-      role: "Operaria de Producción",
-      shift: "Turno Tarde (14:00-22:00)",
-      experience: "8 años",
-      specialty: "Empaque y Control de Calidad",
-      status: "Activo",
-      hourlyRate: "$18/hora"
-    },
-    {
-      name: "Roberto Silva",
-      role: "Operario de Producción",
-      shift: "Turno Noche (22:00-6:00)",
-      experience: "5 años",
-      specialty: "Limpieza y Mantenimiento",
-      status: "Activo",
-      hourlyRate: "$20/hora"
-    }
-  ];
+  const [equipos, setEquipos] = useState<EquipoList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedEquipo, setSelectedEquipo] = useState<EquipoList | null>(null);
+  const [equipoToEdit, setEquipoToEdit] = useState<Equipo | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filters, setFilters] = useState<EquipoFilters>({});
 
-  const logisticsTeam = [
-    {
-      name: "Juan Pérez",
-      role: "Chofer Principal",
-      vehicle: "Camión Refrigerado #1",
-      route: "Zona Norte y Centro",
-      license: "Profesional Vigente",
-      status: "Activo",
-      experience: "12 años"
-    },
-    {
-      name: "Ana Martínez",
-      role: "Chofer de Reparto",
-      vehicle: "Camión Refrigerado #2",
-      route: "Zona Sur y Este",
-      license: "Profesional Vigente",
-      status: "Activo",
-      experience: "7 años"
-    }
-  ];
+  // Estadísticas de equipos
+  const [stats, setStats] = useState({
+    total: 0,
+    activos: 0,
+    produccion: 0,
+    logistica: 0,
+    administracion: 0,
+    ventas: 0,
+    otros: 0
+  });
 
-  const administrationTeam = [
-    {
-      name: "Patricia López",
-      role: "Dueña/Socia Principal",
-      permissions: "Acceso Total",
-      responsibilities: "Decisiones Estratégicas, Finanzas",
-      contact: "+54 11 1234-5678",
-      status: "Activo"
-    },
-    {
-      name: "Miguel Rodríguez",
-      role: "Socio Operativo",
-      permissions: "Producción y Ventas",
-      responsibilities: "Operaciones Diarias, Control de Calidad",
-      contact: "+54 11 2345-6789",
-      status: "Activo"
-    },
-    {
-      name: "Laura Fernández",
-      role: "Administradora",
-      permissions: "Contabilidad y RRHH",
-      responsibilities: "Gestión Administrativa, Nóminas",
-      contact: "+54 11 3456-7890",
-      status: "Activo"
-    }
-  ];
+  useEffect(() => {
+    loadEquipos();
+  }, [filters]);
 
-  const departments = [
-    { name: "Producción", count: 3, color: "bg-blue-100 text-blue-800", icon: Factory },
-    { name: "Logística", count: 2, color: "bg-green-100 text-green-800", icon: Truck },
-    { name: "Administración", count: 3, color: "bg-purple-100 text-purple-800", icon: UserCheck }
+  useEffect(() => {
+    calculateStats();
+  }, [equipos]);
+
+  const loadEquipos = async () => {
+    try {
+      setIsLoading(true);
+      const response = await rrhhService.getEquipos(filters);
+      setEquipos(response.results);
+    } catch (error) {
+      console.error('Error al cargar equipos:', error);
+      toast.error('Error al cargar los equipos');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateStats = () => {
+    const newStats = {
+      total: equipos.length,
+      activos: equipos.filter(e => e.activo).length,
+      produccion: equipos.filter(e => e.tipo === 'produccion').length,
+      logistica: equipos.filter(e => e.tipo === 'logistica').length,
+      administracion: equipos.filter(e => e.tipo === 'administracion').length,
+      ventas: equipos.filter(e => e.tipo === 'ventas').length,
+      otros: equipos.filter(e => e.tipo === 'otro').length,
+    };
+    setStats(newStats);
+  };
+
+  const handleCreateEquipo = () => {
+    setEquipoToEdit(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditEquipo = async (equipo: EquipoList) => {
+    try {
+      const equipoCompleto = await rrhhService.getEquipo(equipo.id);
+      setEquipoToEdit(equipoCompleto);
+      setIsFormOpen(true);
+    } catch (error) {
+      console.error('Error al cargar equipo:', error);
+      toast.error('Error al cargar los datos del equipo');
+    }
+  };
+
+  const handleDeleteEquipo = (equipo: EquipoList) => {
+    setSelectedEquipo(equipo);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleViewEquipo = (equipo: EquipoList) => {
+    // TODO: Implementar vista detallada del equipo
+    toast.info('Vista detallada próximamente disponible');
+  };
+
+  const handleFormSubmit = async (data: CreateEquipoData | UpdateEquipoData) => {
+    try {
+      setIsSubmitting(true);
+      
+      if ('id' in data) {
+        // Actualizar equipo existente
+        await rrhhService.updateEquipo(data.id, data);
+        toast.success('Equipo actualizado exitosamente');
+      } else {
+        // Crear nuevo equipo
+        await rrhhService.createEquipo(data);
+        toast.success('Equipo creado exitosamente');
+      }
+      
+      setIsFormOpen(false);
+      setEquipoToEdit(null);
+      await loadEquipos();
+    } catch (error) {
+      console.error('Error al guardar equipo:', error);
+      toast.error('Error al guardar el equipo');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedEquipo) return;
+
+    try {
+      await rrhhService.deleteEquipo(selectedEquipo.id);
+      toast.success('Equipo eliminado exitosamente');
+      setIsDeleteDialogOpen(false);
+      setSelectedEquipo(null);
+      await loadEquipos();
+    } catch (error) {
+      console.error('Error al eliminar equipo:', error);
+      toast.error('Error al eliminar el equipo');
+    }
+  };
+
+  const departmentStats = [
+    { 
+      name: "Producción", 
+      count: stats.produccion, 
+      color: "bg-blue-100 text-blue-800", 
+      icon: Factory 
+    },
+    { 
+      name: "Logística", 
+      count: stats.logistica, 
+      color: "bg-green-100 text-green-800", 
+      icon: Truck 
+    },
+    { 
+      name: "Administración", 
+      count: stats.administracion, 
+      color: "bg-purple-100 text-purple-800", 
+      icon: UserCheck 
+    },
+    { 
+      name: "Ventas", 
+      count: stats.ventas, 
+      color: "bg-orange-100 text-orange-800", 
+      icon: ShoppingCart 
+    },
   ];
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl mb-2">Gestión de Equipo</h1>
-          <p className="text-muted-foreground">Administra los equipos de Producción, Logística y Administración.</p>
+          <h1 className="text-3xl mb-2">Gestión de Equipos</h1>
+          <p className="text-muted-foreground">
+            Administra los equipos de trabajo de tu empresa de manera eficiente.
+          </p>
         </div>
+        <Button onClick={handleCreateEquipo} className="flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Nuevo Equipo
+        </Button>
       </div>
 
-      {/* Department Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {departments.map((dept) => {
+      {/* Estadísticas generales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Equipos</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Equipos Activos</p>
+                <p className="text-2xl font-bold text-green-600">{stats.activos}</p>
+              </div>
+              <UserCheck className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {departmentStats.slice(0, 2).map((dept) => {
+          const IconComponent = dept.icon;
+          return (
+            <Card key={dept.name}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">{dept.name}</p>
+                    <p className="text-2xl font-bold">{dept.count}</p>
+                  </div>
+                  <IconComponent className="w-8 h-8 text-gray-500" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Estadísticas por departamento */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {departmentStats.map((dept) => {
           const IconComponent = dept.icon;
           return (
             <Card key={dept.name}>
@@ -122,7 +245,9 @@ export function TeamSection() {
                       <h3 className="font-medium">{dept.name}</h3>
                     </div>
                     <p className="text-2xl font-bold">{dept.count}</p>
-                    <p className="text-xs text-muted-foreground">miembros</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dept.count === 1 ? 'equipo' : 'equipos'}
+                    </p>
                   </div>
                   <div className={`w-3 h-12 rounded ${dept.color}`}></div>
                 </div>
@@ -132,148 +257,57 @@ export function TeamSection() {
         })}
       </div>
 
-      {/* Production Team */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Factory className="w-5 h-5" />
-            Equipo de Producción
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {productionTeam.map((member) => (
-              <div key={member.name} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium">{member.name}</h4>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                    <p className="text-xs text-muted-foreground">{member.specialty}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="hidden md:block text-right text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1 mb-1">
-                      <Clock className="w-3 h-3" />
-                      {member.shift}
-                    </div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Calendar className="w-3 h-3" />
-                      {member.experience}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-3 h-3" />
-                      {member.hourlyRate}
-                    </div>
-                  </div>
-                  
-                  <Badge variant={member.status === "Activo" ? "default" : "secondary"}>
-                    {member.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Lista de equipos */}
+      <EquiposList
+        equipos={equipos}
+        isLoading={isLoading}
+        onCreateEquipo={handleCreateEquipo}
+        onEditEquipo={handleEditEquipo}
+        onDeleteEquipo={handleDeleteEquipo}
+        onViewEquipo={handleViewEquipo}
+        onFiltersChange={setFilters}
+      />
 
-      {/* Logistics Team */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Truck className="w-5 h-5" />
-            Equipo de Logística
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {logisticsTeam.map((member) => (
-              <div key={member.name} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium">{member.name}</h4>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                    <p className="text-xs text-muted-foreground">{member.vehicle}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="hidden md:block text-right text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1 mb-1">
-                      <MapPin className="w-3 h-3" />
-                      {member.route}
-                    </div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <UserCheck className="w-3 h-3" />
-                      {member.license}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {member.experience}
-                    </div>
-                  </div>
-                  
-                  <Badge variant={member.status === "Activo" ? "default" : "secondary"}>
-                    {member.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modal para formulario */}
+      <CustomModal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title={equipoToEdit ? 'Editar Equipo' : 'Crear Nuevo Equipo'}
+        size="xl"
+      >
+        <EquipoForm
+          equipo={equipoToEdit || undefined}
+          onSubmit={handleFormSubmit}
+          onCancel={() => {
+            setIsFormOpen(false);
+            setEquipoToEdit(null);
+          }}
+          isLoading={isSubmitting}
+        />
+      </CustomModal>
 
-      {/* Administration Team */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Equipo de Administración
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {administrationTeam.map((member) => (
-              <div key={member.name} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium">{member.name}</h4>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                    <p className="text-xs text-muted-foreground">{member.permissions}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="hidden md:block text-right text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1 mb-1">
-                      <UserCheck className="w-3 h-3" />
-                      {member.responsibilities}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {member.contact}
-                    </div>
-                  </div>
-                  
-                  <Badge variant={member.status === "Activo" ? "default" : "secondary"}>
-                    {member.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modal de confirmación para eliminar */}
+      <CustomModal
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        title="¿Estás seguro?"
+        description={`Esta acción no se puede deshacer. Se eliminará permanentemente el equipo "${selectedEquipo?.nombre}" y se removerá la asignación de todos sus miembros.`}
+      >
+        <div className="flex justify-end gap-3 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setIsDeleteDialogOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Eliminar
+          </Button>
+        </div>
+      </CustomModal>
     </div>
   );
 }

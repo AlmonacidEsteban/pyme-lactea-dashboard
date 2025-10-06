@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./App.css";
 import { EnterpriseNavigation } from "./components/EnterpriseNavigation";
 import { Dashboard } from "./components/Dashboard";
-import { TeamSection } from "./components/TeamSection";
+import { RRHHDashboard } from "./components/rrhh/RRHHDashboard";
 import { PurchasesSection } from "./components/PurchasesSection";
 import { ProductionCenterSection } from "./components/ProductionCenterSection";
 import { ProductsSection } from "./components/ProductsSection";
@@ -10,7 +10,7 @@ import { SuppliersSection } from "./components/SuppliersSection";
 import { SalesSection } from "./components/SalesSection";
 import { ProjectsSection } from "./components/ProjectsSection";
 import { FinancesSection } from "./components/FinancesSection";
-import { ClientsSection } from "./components/ClientsSection";
+import { ClientesPage } from "./pages/ClientesPage";
 import { CalendarSection } from "./components/CalendarSection";
 import { ReportsSection } from "./components/ReportsSection";
 import { WhatsAppSection } from "./components/WhatsAppSection";
@@ -42,7 +42,7 @@ export default function App() {
       case "dashboard":
         return <Dashboard />;
       case "team":
-        return <TeamSection />;
+        return <RRHHDashboard />;
       case "purchases":
         return <PurchasesSection />;
       case "production-center":
@@ -56,7 +56,7 @@ export default function App() {
       case "finances":
         return <FinancesSection />;
       case "clients":
-        return <ClientsSection />;
+        return <ClientesPage />;
       case "whatsapp":
         return <WhatsAppSection />;
       case "calendar":
