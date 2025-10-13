@@ -921,11 +921,11 @@ export function PurchasesSection({ initialTab = 'dashboard' }: { initialTab?: st
             <ShoppingCart className="h-4 w-4 mr-2" />
             Órdenes
           </TabsTrigger>
-          <TabsTrigger value="stock">
+          <TabsTrigger value="accion">
             <Package className="h-4 w-4 mr-2" />
             Stock
           </TabsTrigger>
-          <TabsTrigger value="proveedores">
+          <TabsTrigger value="proveedor">
             <Users className="h-4 w-4 mr-2" />
             Proveedores
           </TabsTrigger>
@@ -943,11 +943,11 @@ export function PurchasesSection({ initialTab = 'dashboard' }: { initialTab?: st
           <GestionOrdenes />
         </TabsContent>
 
-        <TabsContent value="stock" className="space-y-4">
+        <TabsContent value="accion" className="space-y-4">
           <GestionStock />
         </TabsContent>
 
-        <TabsContent value="proveedores" className="space-y-4">
+        <TabsContent value="proveedor" className="space-y-4">
           <GestionProveedores />
         </TabsContent>
 
