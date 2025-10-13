@@ -30,8 +30,6 @@ export function EnterpriseNavigation({ activeSection, onSectionChange, user, onL
   const navigationItems = [
     { id: 'team', label: 'Recursos Humanos', icon: UserCheck },
     { id: 'purchases', label: 'Compras', icon: ShoppingCart },
-    { id: 'accion', label: 'Stock', icon: Package },
-    { id: 'proveedor', label: 'Proveedores', icon: Truck },
     { id: 'production', label: 'Centro de Producción', icon: Factory },
     { id: 'products', label: 'Productos', icon: Package },
     { id: 'suppliers', label: 'Proveedores', icon: Truck },

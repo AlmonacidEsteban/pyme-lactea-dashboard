@@ -44,10 +44,6 @@ export default function App() {
         return <RRHHDashboard />;
       case "purchases":
         return <PurchasesSection initialTab="dashboard" />;
-      case "accion":
-        return <PurchasesSection initialTab="accion" />;
-      case "proveedor":
-        return <PurchasesSection initialTab="proveedor" />;
       case "products":
         return <ProductsSection />;
       case "suppliers":
