@@ -1,9 +1,14 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 
 from rest_framework import serializers
 
 from productos.models import Producto
-from .models import CategoriaCompra, Compra, CompraLinea
+from proveedores.models import Proveedor
+from .models import (
+    CategoriaCompra, Compra, CompraLinea,
+    OrdenCompra, OrdenCompraItem, MovimientoStock,
+    HistorialPrecios, AlertaStock
+)
 
 
 class CategoriaCompraSerializer(serializers.ModelSerializer):
@@ -144,3 +149,142 @@ class CompraSerializer(serializers.ModelSerializer):
             movimiento.origen = MovimientoFinanciero.Origen.COMPRA
             movimiento.descripcion = descripcion
             movimiento.save(update_fields=["fecha", "monto", "tipo", "descripcion"])
+
+
+# Nuevos serializers para el módulo extendido de compras
+
+class OrdenCompraItemSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
+    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    cantidad_pendiente = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    esta_completo = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = OrdenCompraItem
+        fields = [
+            'id', 'producto', 'producto_nombre', 'producto_codigo',
+            'cantidad_solicitada', 'cantidad_recibida', 'cantidad_pendiente',
+            'precio_unitario', 'subtotal', 'esta_completo', 'notas'
+        ]
+        read_only_fields = ['subtotal']
+
+
+class OrdenCompraSerializer(serializers.ModelSerializer):
+    proveedor_nombre = serializers.CharField(source="proveedor.nombre", read_only=True)
+    creado_por_nombre = serializers.CharField(source="creado_por.username", read_only=True)
+    aprobado_por_nombre = serializers.CharField(source="aprobado_por.username", read_only=True)
+    items = OrdenCompraItemSerializer(many=True, read_only=True)
+    estado_display = serializers.CharField(source="get_estado_display", read_only=True)
+
+    class Meta:
+        model = OrdenCompra
+        fields = [
+            'id', 'numero', 'proveedor', 'proveedor_nombre',
+            'fecha_creacion', 'fecha_envio', 'fecha_entrega_esperada',
+            'fecha_entrega_real', 'estado', 'estado_display',
+            'subtotal', 'impuestos', 'total', 'notas',
+            'creado_por', 'creado_por_nombre', 'aprobado_por', 'aprobado_por_nombre',
+            'items'
+        ]
+        read_only_fields = ['numero', 'subtotal', 'impuestos', 'total', 'creado_por']
+
+    def create(self, validated_data):
+        # Generar número de orden automáticamente
+        ultimo_numero = OrdenCompra.objects.filter(
+            numero__startswith='OC-'
+        ).order_by('-numero').first()
+        
+        if ultimo_numero:
+            try:
+                ultimo_num = int(ultimo_numero.numero.split('-')[1])
+                nuevo_numero = f"OC-{ultimo_num + 1:06d}"
+            except (ValueError, IndexError):
+                nuevo_numero = "OC-000001"
+        else:
+            nuevo_numero = "OC-000001"
+        
+        validated_data['numero'] = nuevo_numero
+        validated_data['creado_por'] = self.context['request'].user
+        
+        return super().create(validated_data)
+
+
+class MovimientoStockSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
+    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    usuario_nombre = serializers.CharField(source="usuario.username", read_only=True)
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+
+    class Meta:
+        model = MovimientoStock
+        fields = [
+            'id', 'producto', 'producto_nombre', 'producto_codigo',
+            'tipo', 'tipo_display', 'cantidad', 'costo_unitario',
+            'fecha', 'referencia', 'orden_compra_item',
+            'usuario', 'usuario_nombre', 'notas'
+        ]
+        read_only_fields = ['usuario', 'fecha']
+
+    def create(self, validated_data):
+        validated_data['usuario'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class HistorialPreciosSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
+    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    proveedor_nombre = serializers.CharField(source="proveedor.nombre", read_only=True)
+
+    class Meta:
+        model = HistorialPrecios
+        fields = [
+            'id', 'producto', 'producto_nombre', 'producto_codigo',
+            'proveedor', 'proveedor_nombre', 'precio', 'fecha',
+            'orden_compra_item', 'cantidad_comprada'
+        ]
+        read_only_fields = ['fecha']
+
+
+class AlertaStockSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
+    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    proveedor_nombre = serializers.CharField(source="proveedor.nombre", read_only=True)
+    resuelto_por_nombre = serializers.CharField(source="resuelto_por.username", read_only=True)
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+    estado_display = serializers.CharField(source="get_estado_display", read_only=True)
+
+    class Meta:
+        model = AlertaStock
+        fields = [
+            'id', 'tipo', 'tipo_display', 'producto', 'producto_nombre', 'producto_codigo',
+            'proveedor', 'proveedor_nombre', 'mensaje', 'estado', 'estado_display',
+            'fecha_creacion', 'fecha_resolucion', 'resuelto_por', 'resuelto_por_nombre',
+            'valor_referencia'
+        ]
+        read_only_fields = ['fecha_creacion', 'fecha_resolucion', 'resuelto_por']
+
+
+# Serializers para reportes y estadísticas
+class EstadisticasComprasSerializer(serializers.Serializer):
+    total_compras = serializers.IntegerField()
+    monto_total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    promedio_por_orden = serializers.DecimalField(max_digits=12, decimal_places=2)
+    ahorro_estimado = serializers.DecimalField(max_digits=12, decimal_places=2)
+    ordenes_pendientes = serializers.IntegerField()
+    ordenes_completadas = serializers.IntegerField()
+    proveedores_activos = serializers.IntegerField()
+
+
+class ResumenProveedorSerializer(serializers.Serializer):
+    proveedor_id = serializers.IntegerField()
+    proveedor_nombre = serializers.CharField()
+    total_compras = serializers.IntegerField()
+    monto_total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    promedio_compra = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class ResumenCategoriaSerializer(serializers.Serializer):
+    categoria_id = serializers.IntegerField()
+    categoria_nombre = serializers.CharField()
+    total_compras = serializers.IntegerField()
+    monto_total = serializers.DecimalField(max_digits=12, decimal_places=2)

@@ -105,22 +105,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        console.log('🔄 AuthContext - Inicializando autenticación...');
+        console.log('🔄 AuthContext - isAuthenticated():', authService.isAuthenticated());
+        console.log('🔄 AuthContext - access_token:', authService.getAccessToken());
+        
         if (authService.isAuthenticated()) {
+          console.log('✅ AuthContext - Usuario autenticado, obteniendo información...');
           const user = await authService.getUserInfo();
+          console.log('✅ AuthContext - Información de usuario obtenida:', user);
+          
           const tokens = {
             access: authService.getAccessToken(),
             refresh: authService.getRefreshToken(),
           };
           
+          console.log('✅ AuthContext - Tokens obtenidos:', tokens);
+          
           dispatch({ 
             type: 'AUTH_SUCCESS', 
             payload: { user, tokens } 
           });
+          
+          console.log('✅ AuthContext - Estado de autenticación actualizado exitosamente');
         } else {
+          console.log('❌ AuthContext - Usuario no autenticado, estableciendo loading=false');
           dispatch({ type: 'SET_LOADING', payload: false });
         }
       } catch (error) {
-        console.error('Error al inicializar autenticación:', error);
+        console.error('❌ AuthContext - Error al inicializar autenticación:', error);
+        console.error('❌ AuthContext - Detalles del error:', {
+          message: error instanceof Error ? error.message : 'Error desconocido',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        
+        // Limpiar tokens si hay error
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        
         dispatch({ type: 'AUTH_FAILURE', payload: 'Error al verificar autenticación' });
       }
     };
@@ -131,11 +152,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Función de login
   const login = async (credentials: LoginCredentials) => {
     try {
-      console.log('🔐 Iniciando login...', credentials);
+      console.log('🔐 AuthContext - Iniciando login...', credentials);
       dispatch({ type: 'AUTH_START' });
       
       const response = await authService.login(credentials);
-      console.log('✅ Login exitoso:', response);
+      console.log('✅ AuthContext - Login exitoso:', response);
+      console.log('✅ AuthContext - Usuario recibido:', response.user);
+      console.log('✅ AuthContext - Tokens recibidos:', response.tokens);
       
       dispatch({ 
         type: 'AUTH_SUCCESS', 
@@ -145,9 +168,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } 
       });
       
-      console.log('🎯 Estado de autenticación actualizado');
+      console.log('🎯 AuthContext - Estado de autenticación actualizado exitosamente');
+      console.log('🎯 AuthContext - Verificando localStorage...');
+      console.log('🎯 AuthContext - access_token en localStorage:', localStorage.getItem('access_token'));
+      console.log('🎯 AuthContext - refresh_token en localStorage:', localStorage.getItem('refresh_token'));
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      console.error('❌ AuthContext - Error en login:', error);
+      console.error('❌ AuthContext - Detalles del error:', {
+        message: error instanceof Error ? error.message : 'Error desconocido',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       const errorMessage = error instanceof Error ? error.message : 'Error en el login';
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;

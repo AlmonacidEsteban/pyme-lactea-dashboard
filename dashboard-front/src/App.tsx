@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
 import { EnterpriseNavigation } from "./components/EnterpriseNavigation";
-import { Dashboard } from "./components/Dashboard";
 import { RRHHDashboard } from "./components/rrhh/RRHHDashboard";
 import { PurchasesSection } from "./components/PurchasesSection";
 import { ProductionCenterSection } from "./components/ProductionCenterSection";
@@ -19,7 +18,7 @@ import { AuthFlow } from "./components/auth/AuthFlow";
 import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("production");
   const { authState, logout } = useAuth();
 
   // Debug: Log cuando cambia el estado de autenticación
@@ -34,19 +33,17 @@ export default function App() {
 
   const handleLogout = async () => {
     await logout();
-    setActiveSection("dashboard");
+    setActiveSection("production");
   };
 
   const renderActiveSection = () => {
     switch (activeSection) {
-      case "dashboard":
-        return <Dashboard />;
+      case "production":
+        return <ProductionCenterSection />;
       case "team":
         return <RRHHDashboard />;
       case "purchases":
         return <PurchasesSection />;
-      case "production-center":
-        return <ProductionCenterSection />;
       case "products":
         return <ProductsSection />;
       case "suppliers":
@@ -66,7 +63,7 @@ export default function App() {
       case "settings":
         return <SettingsSection />;
       default:
-        return <Dashboard />;
+        return <ProductionCenterSection />;
     }
   };
 

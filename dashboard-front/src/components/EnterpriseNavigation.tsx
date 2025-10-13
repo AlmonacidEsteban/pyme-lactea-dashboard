@@ -2,7 +2,6 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { 
-  LayoutDashboard, 
   Users, 
   ShoppingCart, 
   DollarSign, 
@@ -29,7 +28,6 @@ interface NavigationProps {
 
 export function EnterpriseNavigation({ activeSection, onSectionChange, user, onLogout }: NavigationProps) {
   const navigationItems = [
-    { id: 'dashboard', label: 'Director del Panel', icon: LayoutDashboard },
     { id: 'team', label: 'Recursos Humanos', icon: UserCheck },
     { id: 'purchases', label: 'Compras', icon: ShoppingCart },
     { id: 'production', label: 'Centro de Producción', icon: Factory },

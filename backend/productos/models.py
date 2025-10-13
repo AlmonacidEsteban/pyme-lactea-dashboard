@@ -31,11 +31,23 @@ class Categoria(models.Model):
 
 
 class Producto(models.Model):
+    UNIDADES_CHOICES = [
+        ('kg', 'Kilogramos'),
+        ('u', 'Unidades'),
+        ('l', 'Litros'),
+        ('m', 'Metros'),
+        ('m2', 'Metros cuadrados'),
+        ('m3', 'Metros cúbicos'),
+        ('caja', 'Cajas'),
+        ('paquete', 'Paquetes'),
+    ]
+    
     marca = models.ForeignKey(Marca, on_delete=models.PROTECT, null=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, null=True, blank=True)
     nombre = models.CharField(max_length=120)
     sku = models.CharField(max_length=50, unique=True, blank=True)
     descripcion = models.TextField(blank=True)
+    unidad = models.CharField(max_length=20, choices=UNIDADES_CHOICES, default='u')
     precio = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -47,8 +59,24 @@ class Producto(models.Model):
         decimal_places=2,
         default=Decimal("0"),
         validators=[MinValueValidator(0)],
+        help_text="Stock actual (currentStock)"
+    )
+    min_stock = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0"),
+        validators=[MinValueValidator(0)],
+        help_text="Stock mínimo para alertas"
+    )
+    avg_cost = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0"),
+        validators=[MinValueValidator(0)],
+        help_text="Costo promedio móvil"
     )
     activo = models.BooleanField(default=True)
+    is_demo = models.BooleanField(default=False, help_text="Marca si es dato de demostración")
 
     class Meta:
         ordering = ["nombre"]
