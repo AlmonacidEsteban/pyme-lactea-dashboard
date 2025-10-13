@@ -43,7 +43,7 @@ export default function App() {
       case "team":
         return <RRHHDashboard />;
       case "purchases":
-        return <PurchasesSection />;
+        return <PurchasesSection initialTab="dashboard" />;
       case "products":
         return <ProductsSection />;
       case "suppliers":

@@ -895,55 +895,8 @@ const ReportesCompras: React.FC = () => {
 };
 
 // Componente principal del módulo
-export function PurchasesSection() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  // Verificar autenticación al cargar el componente
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    console.log('🔐 Estado de autenticación:');
-    console.log('- Token en localStorage:', token ? 'Presente' : 'Ausente');
-    console.log('- Token completo:', token);
-    
-    if (!token) {
-      console.warn('⚠️ Usuario no autenticado - esto causará errores 401');
-    }
-  }, []);
-
-  const handleTabChange = (value: string) => {
-    console.log('🔄🔄🔄 handleTabChange EJECUTADO 🔄🔄🔄');
-    console.log('🔄 Pestaña solicitada:', value);
-    console.log('🔄 Estado anterior:', activeTab);
-    setActiveTab(value);
-    console.log('🔄 Estado nuevo:', value);
-    
-    // Log específico por pestaña
-    if (value === 'dashboard') console.log('✅ DASHBOARD: handleTabChange procesado');
-    if (value === 'ordenes') console.log('✅ ÓRDENES: handleTabChange procesado');
-    if (value === 'stock') console.log('❌ STOCK: handleTabChange procesado - ¿Por qué no cambia?');
-    if (value === 'proveedores') console.log('❌ PROVEEDORES: handleTabChange procesado - ¿Por qué no cambia?');
-    if (value === 'reportes') console.log('❓ REPORTES: handleTabChange procesado');
-    
-    // Mostrar alerta visual para confirmar el cambio
-    const alertDiv = document.createElement('div');
-    alertDiv.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #10b981;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      z-index: 9999;
-      font-weight: bold;
-    `;
-    alertDiv.textContent = `Pestaña cambiada a: ${value}`;
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => {
-      document.body.removeChild(alertDiv);
-    }, 2000);
-  };
+export function PurchasesSection({ initialTab = 'dashboard' }: { initialTab?: string }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
     <div className="p-6 space-y-6">
@@ -958,56 +911,26 @@ export function PurchasesSection() {
 
 
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger 
-            value="dashboard"
-            onClick={() => {
-              console.log('🟢 DASHBOARD: onClick ejecutado');
-              console.log('🟢 DASHBOARD: Debería funcionar');
-            }}
-          >
-            <BarChart3 className="h-4 w-4 mr-2" style={{ pointerEvents: 'none' }} />
+          <TabsTrigger value="dashboard">
+            <BarChart3 className="h-4 w-4 mr-2" />
             Dashboard
           </TabsTrigger>
-          <TabsTrigger 
-            value="ordenes"
-            onClick={() => {
-              console.log('🟢 ÓRDENES: onClick ejecutado');
-              console.log('🟢 ÓRDENES: Debería funcionar');
-            }}
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" style={{ pointerEvents: 'none' }} />
+          <TabsTrigger value="ordenes">
+            <ShoppingCart className="h-4 w-4 mr-2" />
             Órdenes
           </TabsTrigger>
-          <TabsTrigger 
-            value="stock"
-            onClick={() => {
-              console.log('🔴 STOCK: onClick ejecutado');
-              console.log('🔴 STOCK: ¿Por qué no funciona?');
-            }}
-          >
-            <Package className="h-4 w-4 mr-2" style={{ pointerEvents: 'none' }} />
+          <TabsTrigger value="stock">
+            <Package className="h-4 w-4 mr-2" />
             Stock
           </TabsTrigger>
-          <TabsTrigger 
-            value="proveedores"
-            onClick={() => {
-              console.log('🔴 PROVEEDORES: onClick ejecutado');
-              console.log('🔴 PROVEEDORES: ¿Por qué no funciona?');
-            }}
-          >
-            <Users className="h-4 w-4 mr-2" style={{ pointerEvents: 'none' }} />
+          <TabsTrigger value="proveedores">
+            <Users className="h-4 w-4 mr-2" />
             Proveedores
           </TabsTrigger>
-          <TabsTrigger 
-            value="reportes"
-            onClick={() => {
-              console.log('🟡 REPORTES: onClick ejecutado');
-              console.log('🟡 REPORTES: ¿Funciona o no?');
-            }}
-          >
-            <FileText className="h-4 w-4 mr-2" style={{ pointerEvents: 'none' }} />
+          <TabsTrigger value="reportes">
+            <FileText className="h-4 w-4 mr-2" />
             Reportes
           </TabsTrigger>
         </TabsList>
