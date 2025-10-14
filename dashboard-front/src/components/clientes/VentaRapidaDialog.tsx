@@ -146,32 +146,33 @@ export function VentaRapidaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white border-2 border-gray-200 shadow-2xl">
+        <DialogHeader className="pb-4 border-b border-gray-200">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-gray-900">
+            <ShoppingCart className="h-6 w-6 text-blue-600" />
             Venta Rápida
             {cliente && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-300 font-medium">
                 {cliente.nombre}
               </Badge>
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600 font-medium">
             Registra una venta rápida seleccionando productos y cantidades.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           {/* Items de venta */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Productos</Label>
+            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+              <Label className="text-lg font-bold text-gray-900">Productos</Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addItem}
+                className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100 font-medium"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Agregar producto
@@ -180,21 +181,24 @@ export function VentaRapidaDialog({
 
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end p-3 border rounded-lg">
+                <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border-2 border-gray-300 rounded-lg bg-white shadow-sm">
                   {/* Producto */}
                   <div className="col-span-5">
-                    <Label className="text-xs">Producto</Label>
+                    <Label className="text-sm font-semibold text-gray-700 mb-1 block">Producto</Label>
                     <Select
                       value={item.producto_id}
                       onValueChange={(value) => handleProductoChange(index, value)}
                     >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Seleccionar producto" />
+                      <SelectTrigger className="h-10 border-2 border-gray-300 text-gray-900 font-medium">
+                        <SelectValue placeholder="🛍️ Seleccionar producto" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-2 border-gray-300 max-h-60">
                         {productos.map((producto) => (
-                          <SelectItem key={producto.id} value={producto.id}>
-                            {producto.nombre} - {formatCurrency(producto.precio)}
+                          <SelectItem key={producto.id} value={producto.id} className="text-gray-900 font-medium hover:bg-gray-100 py-2">
+                            <div className="flex justify-between items-center w-full">
+                              <span className="font-semibold">{producto.nombre}</span>
+                              <span className="text-green-600 font-bold ml-2">{formatCurrency(producto.precio)}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -203,46 +207,47 @@ export function VentaRapidaDialog({
 
                   {/* Cantidad */}
                   <div className="col-span-2">
-                    <Label className="text-xs">Cantidad</Label>
+                    <Label className="text-sm font-semibold text-gray-700 mb-1 block">Cantidad</Label>
                     <Input
                       type="number"
                       min="1"
                       value={item.cantidad}
                       onChange={(e) => handleCantidadChange(index, parseInt(e.target.value) || 1)}
-                      className="h-9"
+                      className="h-10 border-2 border-gray-300 text-gray-900 font-medium"
                     />
                   </div>
 
                   {/* Precio unitario */}
                   <div className="col-span-2">
-                    <Label className="text-xs">Precio</Label>
+                    <Label className="text-sm font-semibold text-gray-700 mb-1 block">Precio</Label>
                     <Input
                       type="number"
                       min="0"
                       step="0.01"
                       value={item.precio_unitario}
                       onChange={(e) => handlePrecioChange(index, parseFloat(e.target.value) || 0)}
-                      className="h-9"
+                      className="h-10 border-2 border-gray-300 text-gray-900 font-medium"
                     />
                   </div>
 
                   {/* Subtotal */}
                   <div className="col-span-2">
-                    <Label className="text-xs">Subtotal</Label>
-                    <div className="h-9 px-3 py-2 bg-muted rounded-md text-sm">
+                    <Label className="text-sm font-semibold text-gray-700 mb-1 block">Subtotal</Label>
+                    <div className="h-10 px-3 py-2 bg-blue-50 border-2 border-blue-200 rounded-md text-sm font-bold text-blue-900">
                       {formatCurrency(item.subtotal)}
                     </div>
                   </div>
 
                   {/* Eliminar */}
                   <div className="col-span-1">
+                    <Label className="text-sm font-semibold text-gray-700 mb-1 block">Eliminar</Label>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => removeItem(index)}
                       disabled={items.length === 1}
-                      className="h-9 w-9 p-0"
+                      className="h-10 w-10 p-0 border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -253,59 +258,65 @@ export function VentaRapidaDialog({
           </div>
 
           {/* Total */}
-          <div className="flex justify-end">
+          <div className="flex justify-end bg-gray-50 p-4 rounded-lg border-2 border-gray-300">
             <div className="text-right">
-              <Label className="text-base font-semibold">Total</Label>
-              <div className="text-2xl font-bold text-primary">
+              <Label className="text-lg font-bold text-gray-900 block mb-2">Total de la Venta</Label>
+              <div className="text-3xl font-bold text-green-700 bg-green-50 px-4 py-2 rounded-lg border-2 border-green-300">
                 {formatCurrency(getTotal())}
               </div>
             </div>
           </div>
 
           {/* Método de pago */}
-          <div className="space-y-2">
-            <Label htmlFor="metodo_pago">Método de pago</Label>
+          <div className="space-y-3 bg-gray-50 p-4 rounded-lg border-2 border-gray-300">
+            <Label htmlFor="metodo_pago" className="text-lg font-bold text-gray-900">Método de pago</Label>
             <Select
               value={formData.metodo_pago}
               onValueChange={(value) => setFormData(prev => ({ ...prev, metodo_pago: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12 border-2 border-gray-300 text-gray-900 font-medium text-base">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="efectivo">Efectivo</SelectItem>
-                <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                <SelectItem value="transferencia">Transferencia</SelectItem>
-                <SelectItem value="credito">Crédito</SelectItem>
+              <SelectContent className="bg-white border-2 border-gray-300">
+                <SelectItem value="efectivo" className="text-gray-900 font-medium hover:bg-gray-100">💵 Efectivo</SelectItem>
+                <SelectItem value="tarjeta" className="text-gray-900 font-medium hover:bg-gray-100">💳 Tarjeta</SelectItem>
+                <SelectItem value="transferencia" className="text-gray-900 font-medium hover:bg-gray-100">🏦 Transferencia</SelectItem>
+                <SelectItem value="credito" className="text-gray-900 font-medium hover:bg-gray-100">📋 Crédito</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Observaciones */}
-          <div className="space-y-2">
-            <Label htmlFor="observaciones">Observaciones</Label>
+          <div className="space-y-3 bg-gray-50 p-4 rounded-lg border-2 border-gray-300">
+            <Label htmlFor="observaciones" className="text-lg font-bold text-gray-900">Observaciones</Label>
             <Textarea
               id="observaciones"
               value={formData.observaciones}
               onChange={(e) => setFormData(prev => ({ ...prev, observaciones: e.target.value }))}
               placeholder="Observaciones adicionales..."
               rows={3}
+              className="border-2 border-gray-300 text-gray-900 font-medium resize-none"
             />
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-4 pt-6 border-t-2 border-gray-300 bg-gray-50 p-4 rounded-lg">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
+              className="px-6 py-3 text-base font-semibold border-2 border-gray-400 text-gray-700 hover:bg-gray-100 hover:border-gray-500"
             >
-              Cancelar
+              ❌ Cancelar
             </Button>
-            <Button type="submit" disabled={loading || getTotal() === 0}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Procesar Venta
+            <Button 
+              type="submit" 
+              disabled={loading || getTotal() === 0}
+              className="px-6 py-3 text-base font-semibold bg-green-600 hover:bg-green-700 text-white border-2 border-green-600 hover:border-green-700"
+            >
+              {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              💰 Procesar Venta
             </Button>
           </div>
         </form>

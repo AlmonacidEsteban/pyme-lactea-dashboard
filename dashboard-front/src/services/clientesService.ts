@@ -11,6 +11,7 @@ import {
   ImportResult
 } from '../types/clientes';
 import { API_CONFIG, getAuthHeaders } from '../config/api';
+import { authService } from './authService';
 
 class ClientesService {
   private baseUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENTES}`;
@@ -32,9 +33,8 @@ class ClientesService {
 
     const url = `${this.baseUrl}${params.toString() ? `?${params.toString()}` : ''}`;
     
-    const response = await fetch(url, {
+    const response = await authService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -46,9 +46,8 @@ class ClientesService {
 
   // Obtener cliente por ID
   async getById(id: number): Promise<Cliente> {
-    const response = await fetch(`${this.baseUrl}${id}/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${id}/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -60,9 +59,11 @@ class ClientesService {
 
   // Crear cliente
   async create(data: Partial<Cliente>): Promise<Cliente> {
-    const response = await fetch(this.baseUrl, {
+    const response = await authService.makeAuthenticatedRequest(this.baseUrl, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
 
@@ -76,9 +77,11 @@ class ClientesService {
 
   // Actualizar cliente
   async update(id: number, data: Partial<Cliente>): Promise<Cliente> {
-    const response = await fetch(`${this.baseUrl}${id}/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${id}/`, {
       method: 'PATCH',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
 
@@ -92,9 +95,8 @@ class ClientesService {
 
   // Eliminar cliente
   async remove(id: number): Promise<void> {
-    const response = await fetch(`${this.baseUrl}${id}/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${id}/`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -119,9 +121,8 @@ class ClientesService {
       });
     }
 
-    const response = await fetch(`${this.baseUrl}export/?${params.toString()}`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}export/?${params.toString()}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -136,11 +137,8 @@ class ClientesService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}import/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}import/`, {
       method: 'POST',
-      headers: {
-        'Authorization': getAuthHeaders().Authorization || '',
-      },
       body: formData,
     });
 
@@ -153,9 +151,8 @@ class ClientesService {
 
   // Obtener estado de cuenta
   async getEstadoCuenta(clienteId: number): Promise<EstadoCuenta> {
-    const response = await fetch(`${this.baseUrl}${clienteId}/estado-cuenta/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${clienteId}/estado-cuenta/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -173,9 +170,11 @@ class ClientesService {
       datos_adicionales: datosAdicionales,
     };
 
-    const response = await fetch(`${this.baseUrl}${clienteId}/whatsapp/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${clienteId}/whatsapp/`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(payload),
     });
 
@@ -186,9 +185,11 @@ class ClientesService {
 
   // Venta rápida
   async ventaRapida(payload: VentaRapidaPayload): Promise<void> {
-    const response = await fetch(`${this.baseUrl}${payload.cliente_id}/venta-rapida/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${payload.cliente_id}/venta-rapida/`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(payload),
     });
 
@@ -199,9 +200,11 @@ class ClientesService {
 
   // Registrar cobro
   async registrarCobro(payload: CobroPayload): Promise<void> {
-    const response = await fetch(`${this.baseUrl}${payload.cliente_id}/cobro/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${payload.cliente_id}/cobro/`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(payload),
     });
 
@@ -212,9 +215,8 @@ class ClientesService {
 
   // Obtener comprobantes pendientes
   async getComprobantesPendientes(clienteId: number) {
-    const response = await fetch(`${this.baseUrl}${clienteId}/comprobantes-pendientes/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${clienteId}/comprobantes-pendientes/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -230,9 +232,8 @@ class ClientesService {
       ? `${this.baseUrl}${clienteId}/productos-sugeridos/`
       : `${this.baseUrl}productos-sugeridos/`;
       
-    const response = await fetch(url, {
+    const response = await authService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -244,9 +245,8 @@ class ClientesService {
 
   // Obtener vista tree (agrupada por inicial)
   async getTree() {
-    const response = await fetch(`${this.baseUrl}tree/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}tree/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -258,9 +258,8 @@ class ClientesService {
 
   // Obtener perfil completo del cliente
   async getPerfil(clienteId: number) {
-    const response = await fetch(`${this.baseUrl}${clienteId}/perfil/`, {
+    const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${clienteId}/perfil/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {

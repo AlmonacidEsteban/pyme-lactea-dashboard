@@ -6,6 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Switch } from './ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -31,9 +35,11 @@ import {
   AlertTriangle,
   Users,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  History
 } from 'lucide-react';
 import { comprasService, type OrdenCompra, type DashboardStats, type AlertaStock, type Proveedor, type Producto } from '../services/comprasService';
+import { proveedoresService, cuentasPorPagarService } from '../services/proveedoresService';
 import { toast } from 'sonner';
 import OrdenCompraForm from './compras/OrdenCompraForm';
 
@@ -698,6 +704,8 @@ const GestionStock: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+
     </div>
   );
 };
@@ -707,18 +715,59 @@ const GestionProveedores: React.FC = () => {
   console.log('Renderizando componente GestionProveedores');
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroActivo, setFiltroActivo] = useState<boolean | undefined>(undefined);
+  
+  // Estados para el formulario de proveedor
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    identificacion: '',
+    contacto: '',
+    telefono: '',
+    correo: '',
+    direccion: '',
+    confiabilidad: 5,
+    dias_pago: 30,
+    notas: '',
+    activo: true
+  });
+
+  // Estados para el historial de compras
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [proveedorHistorial, setProveedorHistorial] = useState<Proveedor | null>(null);
+  const [historialCompras, setHistorialCompras] = useState<any[]>([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+
+  // Estados para el cronograma de pagos
+  const [cronogramaPagos, setCronogramaPagos] = useState<any>(null);
+  const [loadingCronograma, setLoadingCronograma] = useState(false);
 
   useEffect(() => {
     cargarProveedores();
+  }, [busqueda, filtroActivo]);
+
+  useEffect(() => {
+    cargarCronogramaPagos();
   }, []);
 
   const cargarProveedores = async () => {
     try {
       setLoading(true);
       console.log('Cargando proveedores...');
-      const data = await comprasService.getProveedores();
+      
+      // Usar el nuevo servicio de proveedores
+      const filtros = {
+        search: busqueda || undefined,
+        activo: filtroActivo,
+        ordering: 'nombre'
+      };
+      
+      const data = await proveedoresService.getProveedores(filtros);
       console.log('Proveedores cargados:', data);
-      setProveedores(data);
+      setProveedores(data.results || []);
     } catch (error) {
       console.error('Error cargando proveedores:', error);
       if (error instanceof Error) {
@@ -735,16 +784,121 @@ const GestionProveedores: React.FC = () => {
     }
   };
 
+  const resetFormData = () => {
+    setFormData({
+      nombre: '',
+      identificacion: '',
+      contacto: '',
+      telefono: '',
+      correo: '',
+      direccion: '',
+      confiabilidad: 5,
+      dias_pago: 30,
+      notas: '',
+      activo: true
+    });
+  };
+
   const handleNuevoProveedor = () => {
-    toast.info('Funcionalidad de nuevo proveedor en desarrollo');
-    // Aquí se podría abrir un formulario de proveedor o navegar a una página de creación
+    resetFormData();
+    setProveedorEditando(null);
+    setMostrarFormulario(true);
   };
 
   const handleEditarProveedor = (proveedorId: number) => {
     const proveedor = proveedores.find(p => p.id === proveedorId);
     if (proveedor) {
-      toast.info(`Editando proveedor: ${proveedor.nombre}`);
-      // Aquí se podría abrir un formulario de edición
+      setFormData({
+        nombre: proveedor.nombre,
+        identificacion: proveedor.identificacion,
+        contacto: proveedor.contacto,
+        telefono: proveedor.telefono,
+        correo: proveedor.correo,
+        direccion: proveedor.direccion,
+        confiabilidad: proveedor.confiabilidad,
+        dias_pago: proveedor.dias_pago,
+        notas: proveedor.notas || '',
+        activo: proveedor.activo
+      });
+      setProveedorEditando(proveedor);
+      setMostrarFormulario(true);
+    }
+  };
+
+  const handleEliminarProveedor = async (proveedorId: number) => {
+    const proveedor = proveedores.find(p => p.id === proveedorId);
+    if (proveedor && window.confirm(`¿Está seguro de eliminar el proveedor "${proveedor.nombre}"?`)) {
+      try {
+        await proveedoresService.eliminarProveedor(proveedorId);
+        toast.success('Proveedor eliminado exitosamente');
+        cargarProveedores();
+      } catch (error) {
+        console.error('Error eliminando proveedor:', error);
+        toast.error('Error al eliminar el proveedor');
+      }
+    }
+  };
+
+  const handleGuardarProveedor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuardando(true);
+
+    try {
+      if (proveedorEditando) {
+        // Actualizar proveedor existente
+        await proveedoresService.actualizarProveedor(proveedorEditando.id!, formData);
+        toast.success('Proveedor actualizado exitosamente');
+      } else {
+        // Crear nuevo proveedor
+        await proveedoresService.crearProveedor(formData);
+        toast.success('Proveedor creado exitosamente');
+      }
+      
+      setMostrarFormulario(false);
+      cargarProveedores();
+    } catch (error) {
+      console.error('Error guardando proveedor:', error);
+      if (error instanceof Error) {
+        toast.error(`Error al guardar el proveedor: ${error.message}`);
+      } else {
+        toast.error('Error al guardar el proveedor');
+      }
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleCancelarFormulario = () => {
+    setMostrarFormulario(false);
+    setProveedorEditando(null);
+    resetFormData();
+  };
+
+  const cargarHistorialCompras = async (proveedor: Proveedor) => {
+    try {
+      setLoadingHistorial(true);
+      const data = await proveedoresService.getHistorialCompras(proveedor.id!);
+      setHistorialCompras(data.results || []);
+      setProveedorHistorial(proveedor);
+      setMostrarHistorial(true);
+    } catch (error) {
+      console.error('Error cargando historial de compras:', error);
+      toast.error('Error al cargar el historial de compras');
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
+  const cargarCronogramaPagos = async () => {
+    try {
+      setLoadingCronograma(true);
+      const data = await cuentasPorPagarService.getCronogramaPagos();
+      setCronogramaPagos(data);
+    } catch (error) {
+      console.error('Error cargando cronograma de pagos:', error);
+      toast.error('Error al cargar el cronograma de pagos');
+    } finally {
+      setLoadingCronograma(false);
     }
   };
 
@@ -770,15 +924,54 @@ const GestionProveedores: React.FC = () => {
         <Button 
           className="bg-[#1E12A6] hover:bg-[#1E12A6]/90 text-white"
           onClick={handleNuevoProveedor}
+          style={{
+            backgroundColor: '#1E40AF',
+            color: '#FFFFFF',
+            fontWeight: '600',
+            fontSize: '16px',
+            padding: '12px 24px',
+            border: '2px solid #1E40AF',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Nuevo Proveedor
+          🏢 Nuevo Proveedor
         </Button>
       </div>
 
+      {/* Controles de búsqueda y filtrado */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar por nombre, identificación o correo..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Select value={filtroActivo?.toString() || 'todos'} onValueChange={(value) => {
+              if (value === 'todos') setFiltroActivo(undefined);
+              else setFiltroActivo(value === 'true');
+            }}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="true">Activos</SelectItem>
+                <SelectItem value="false">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Proveedores</CardTitle>
+          <CardTitle>Lista de Proveedores ({proveedores.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {proveedores.length === 0 ? (
@@ -789,9 +982,20 @@ const GestionProveedores: React.FC = () => {
               <Button 
                 className="bg-[#1E12A6] hover:bg-[#1E12A6]/90 text-white"
                 onClick={handleNuevoProveedor}
+                style={{
+                  backgroundColor: '#10b981',
+                  color: '#FFFFFF',
+                  fontWeight: '700',
+                  fontSize: '18px',
+                  padding: '16px 32px',
+                  border: '3px solid #10b981',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.2)',
+                  minHeight: '56px'
+                }}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Proveedor
+                <Plus className="w-5 h-5 mr-3" />
+                ➕ Agregar Proveedor
               </Button>
             </div>
           ) : (
@@ -807,9 +1011,30 @@ const GestionProveedores: React.FC = () => {
                     </div>
                     
                     <div className="space-y-2 text-sm text-gray-600">
-                      <p><strong>Email:</strong> {proveedor.email}</p>
+                      <p><strong>Identificación:</strong> {proveedor.identificacion}</p>
+                      <p><strong>Contacto:</strong> {proveedor.contacto}</p>
+                      <p><strong>Email:</strong> {proveedor.correo}</p>
                       <p><strong>Teléfono:</strong> {proveedor.telefono}</p>
                       <p><strong>Dirección:</strong> {proveedor.direccion}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span><strong>Confiabilidad:</strong></span>
+                        <Badge variant="outline" className="text-xs">
+                          {proveedor.confiabilidad}%
+                        </Badge>
+                        <span><strong>Días pago:</strong> {proveedor.dias_pago}</span>
+                      </div>
+                      {proveedor.total_deuda && proveedor.total_deuda > 0 && (
+                        <div className="mt-2 p-2 bg-red-50 rounded">
+                          <p className="text-red-700 text-xs">
+                            <strong>Deuda pendiente:</strong> ${proveedor.total_deuda.toLocaleString()}
+                          </p>
+                          {proveedor.cuentas_pendientes && (
+                            <p className="text-red-600 text-xs">
+                              {proveedor.cuentas_pendientes} cuenta(s) pendiente(s)
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex gap-2 mt-4">
@@ -817,10 +1042,29 @@ const GestionProveedores: React.FC = () => {
                         variant="outline" 
                         size="sm" 
                         className="flex-1"
-                        onClick={() => handleEditarProveedor(proveedor.id)}
+                        onClick={() => handleEditarProveedor(proveedor.id!)}
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => cargarHistorialCompras(proveedor)}
+                        disabled={loadingHistorial}
+                      >
+                        <History className="w-4 h-4 mr-2" />
+                        {loadingHistorial ? 'Cargando...' : 'Historial'}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleEliminarProveedor(proveedor.id!)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
                       </Button>
                       <Button 
                         size="sm" 
@@ -846,12 +1090,156 @@ const GestionProveedores: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de historial de compras */}
+      <Dialog open={mostrarHistorial} onOpenChange={setMostrarHistorial}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Historial de Compras - {proveedorHistorial?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {loadingHistorial ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                <span>Cargando historial de compras...</span>
+              </div>
+            ) : historialCompras.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No se encontraron compras para este proveedor</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Total Compras</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {historialCompras.length}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Monto Total</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          ${historialCompras.reduce((sum, compra) => sum + (compra.total || 0), 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Última Compra</p>
+                        <p className="text-lg font-semibold text-gray-700">
+                          {historialCompras.length > 0 ? 
+                            new Date(historialCompras[0].fecha).toLocaleDateString() : 
+                            'N/A'
+                          }
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b">
+                    <h3 className="font-semibold text-gray-900">Detalle de Compras</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orden #</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Productos</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {historialCompras.map((compra, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {new Date(compra.fecha).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600">
+                              #{compra.numero_orden || `ORD-${index + 1}`}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge 
+                                variant={compra.estado === 'completada' ? 'default' : 'secondary'}
+                                className={
+                                  compra.estado === 'completada' ? 'bg-green-100 text-green-800' :
+                                  compra.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }
+                              >
+                                {compra.estado || 'Completada'}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {compra.productos?.slice(0, 2).join(', ') || 'Productos varios'}
+                              {compra.productos && compra.productos.length > 2 && 
+                                ` y ${compra.productos.length - 2} más`
+                              }
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-right text-gray-900">
+                              ${(compra.total || 0).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setMostrarHistorial(false)}
+            >
+              Cerrar
+            </Button>
+            <Button 
+              style={{ 
+                backgroundColor: '#1E12A6', 
+                color: '#FFFFFF',
+                fontWeight: '500'
+              }}
+              className="hover:opacity-90"
+              onClick={() => {
+                // Aquí se podría implementar la exportación del historial
+                toast.info('Función de exportación en desarrollo');
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 // Componente de Reportes
-const ReportesCompras: React.FC = () => {
+interface ReportesComprasProps {
+  loadingCronograma: boolean;
+  cronogramaPagos: any;
+}
+
+const ReportesCompras: React.FC<ReportesComprasProps> = ({ loadingCronograma, cronogramaPagos }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -865,7 +1253,7 @@ const ReportesCompras: React.FC = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Compras por Mes</CardTitle>
@@ -889,6 +1277,93 @@ const ReportesCompras: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Cronograma de Pagos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingCronograma ? (
+              <div className="flex items-center justify-center h-64">
+                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                <span>Cargando cronograma...</span>
+              </div>
+            ) : cronogramaPagos ? (
+              <div className="space-y-4">
+                {/* Resumen */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 bg-red-50 rounded">
+                    <p className="text-xs text-red-600">Vencidas</p>
+                    <p className="font-bold text-red-700">{cronogramaPagos.vencidas?.length || 0}</p>
+                    <p className="text-xs text-red-600">${(cronogramaPagos.total_vencidas || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="p-2 bg-yellow-50 rounded">
+                    <p className="text-xs text-yellow-600">Próximas</p>
+                    <p className="font-bold text-yellow-700">{cronogramaPagos.proximas?.length || 0}</p>
+                    <p className="text-xs text-yellow-600">${(cronogramaPagos.total_proximas || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="p-2 bg-green-50 rounded">
+                    <p className="text-xs text-green-600">Futuras</p>
+                    <p className="font-bold text-green-700">{cronogramaPagos.futuras?.length || 0}</p>
+                    <p className="text-xs text-green-600">${(cronogramaPagos.total_futuras || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Lista de pagos próximos */}
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {[...(cronogramaPagos.vencidas || []), ...(cronogramaPagos.proximas || [])]
+                    .slice(0, 5)
+                    .map((pago: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                      <div>
+                        <p className="font-medium">{pago.proveedor_nombre}</p>
+                        <p className="text-xs text-gray-600">
+                          Vence: {new Date(pago.fecha_vencimiento).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">${(pago.monto || 0).toLocaleString()}</p>
+                        <Badge 
+                          variant="secondary"
+                          className={
+                            pago.estado === 'overdue' ? 'bg-red-100 text-red-800' :
+                            pago.estado === 'urgent' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }
+                        >
+                          {pago.estado === 'overdue' ? 'Vencida' :
+                           pago.estado === 'urgent' ? 'Urgente' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {(cronogramaPagos.vencidas?.length > 0 || cronogramaPagos.proximas?.length > 0) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      // Aquí se podría abrir un modal con el cronograma completo
+                      toast.info('Vista detallada del cronograma en desarrollo');
+                    }}
+                  >
+                    Ver cronograma completo
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-64 text-gray-500">
+                <Clock className="w-12 h-12 mb-2" />
+                <p>No hay datos de cronograma</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -897,6 +1372,39 @@ const ReportesCompras: React.FC = () => {
 // Componente principal del módulo
 export function PurchasesSection({ initialTab = 'dashboard' }: { initialTab?: string }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Estados para el cronograma de pagos (necesarios para ReportesCompras)
+  const [cronogramaPagos, setCronogramaPagos] = useState<any>(null);
+  const [loadingCronograma, setLoadingCronograma] = useState(false);
+
+  // Log de depuración
+  console.log('PurchasesSection - activeTab:', activeTab);
+  console.log('PurchasesSection - initialTab:', initialTab);
+
+  const handleTabChange = (value: string) => {
+    console.log('Cambiando pestaña a:', value);
+    setActiveTab(value);
+  };
+
+  // Función para cargar cronograma de pagos
+  const cargarCronogramaPagos = async () => {
+    try {
+      setLoadingCronograma(true);
+      console.log('Cargando cronograma de pagos...');
+      const response = await cuentasPorPagarService.getCronogramaPagos();
+      console.log('Cronograma cargado:', response);
+      setCronogramaPagos(response);
+    } catch (error) {
+      console.error('Error al cargar cronograma:', error);
+    } finally {
+      setLoadingCronograma(false);
+    }
+  };
+
+  // Cargar cronograma al montar el componente
+  useEffect(() => {
+    cargarCronogramaPagos();
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -911,50 +1419,108 @@ export function PurchasesSection({ initialTab = 'dashboard' }: { initialTab?: st
 
 
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dashboard">
+      {/* Implementación alternativa de pestañas para diagnóstico */}
+      <div className="space-y-4">
+        {/* Navegación de pestañas personalizada */}
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => handleTabChange('dashboard')}
+            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'dashboard' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <BarChart3 className="h-4 w-4 mr-2" />
             Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="ordenes">
+          </button>
+          <button
+            onClick={() => handleTabChange('ordenes')}
+            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'ordenes' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <ShoppingCart className="h-4 w-4 mr-2" />
             Órdenes
-          </TabsTrigger>
-          <TabsTrigger value="stock">
+          </button>
+          <button
+            onClick={() => handleTabChange('stock')}
+            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'stock' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <Package className="h-4 w-4 mr-2" />
             Stock
-          </TabsTrigger>
-          <TabsTrigger value="proveedores">
+          </button>
+          <button
+            onClick={() => handleTabChange('proveedores')}
+            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'proveedores' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <Users className="h-4 w-4 mr-2" />
             Proveedores
-          </TabsTrigger>
-          <TabsTrigger value="reportes">
+          </button>
+          <button
+            onClick={() => handleTabChange('reportes')}
+            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'reportes' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <FileText className="h-4 w-4 mr-2" />
             Reportes
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        </div>
 
-        <TabsContent value="dashboard" className="space-y-4">
-          <ComprasDashboard />
-        </TabsContent>
-
-        <TabsContent value="ordenes" className="space-y-4">
-          <GestionOrdenes />
-        </TabsContent>
-
-        <TabsContent value="stock" className="space-y-4">
-          <GestionStock />
-        </TabsContent>
-
-        <TabsContent value="proveedores" className="space-y-4">
-          <GestionProveedores />
-        </TabsContent>
-
-        <TabsContent value="reportes" className="space-y-4">
-          <ReportesCompras />
-        </TabsContent>
-      </Tabs>
+        {/* Contenido de las pestañas */}
+        <div className="space-y-4">
+          {activeTab === 'dashboard' && (
+            <div>
+              {console.log('Renderizando Dashboard')}
+              <ComprasDashboard />
+            </div>
+          )}
+          
+          {activeTab === 'ordenes' && (
+            <div>
+              {console.log('Renderizando Órdenes')}
+              <GestionOrdenes />
+            </div>
+          )}
+          
+          {activeTab === 'stock' && (
+            <div>
+              {console.log('Renderizando Stock')}
+              <GestionStock />
+            </div>
+          )}
+          
+          {activeTab === 'proveedores' && (
+            <div>
+              {console.log('Renderizando Proveedores')}
+              <GestionProveedores />
+            </div>
+          )}
+          
+          {activeTab === 'reportes' && (
+            <div>
+              {console.log('Renderizando Reportes')}
+              <ReportesCompras 
+                loadingCronograma={loadingCronograma}
+                cronogramaPagos={cronogramaPagos}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

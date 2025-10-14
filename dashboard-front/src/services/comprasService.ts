@@ -18,11 +18,21 @@ export interface Producto {
 export interface Proveedor {
   id: number;
   nombre: string;
-  email: string;
+  identificacion: string;
+  contacto: string;
   telefono: string;
+  correo: string;
   direccion: string;
   confiabilidad: number;
   dias_pago: number;
+  notas?: string;
+  activo: boolean;
+  is_demo?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // Campos calculados
+  cuentas_pendientes?: number;
+  total_deuda?: number;
 }
 
 export interface OrdenCompraItem {

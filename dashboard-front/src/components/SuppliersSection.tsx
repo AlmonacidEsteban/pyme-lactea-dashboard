@@ -1,6 +1,13 @@
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { 
   Truck, 
   Phone,
@@ -13,181 +20,210 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  Star
+  Star,
+  Plus,
+  Edit,
+  Eye,
+  Users,
+  Package,
+  FileText,
+  Search
 } from "lucide-react";
+import { toast } from 'sonner';
+import { 
+  proveedoresService, 
+  cuentasPorPagarService,
+  Proveedor, 
+  CuentaPorPagar, 
+  EstadisticasProveedor,
+  CronogramaPagos,
+  HistorialCompra
+} from '../services/proveedoresService';
 
 export function SuppliersSection() {
-  const suppliers = [
-    {
-      id: "PROV-001",
-      name: "Lácteos San Martín",
-      type: "Masa y Ricota",
-      contact: {
-        person: "Carlos Rodríguez",
-        phone: "+54 11 4567-8901",
-        email: "carlos@lacteossanmartin.com",
-        address: "Av. San Martín 1234, San Martín, Buenos Aires"
-      },
-      paymentTerms: "15 días",
-      reliability: 95,
-      rating: 4.8,
-      totalPurchases: "$2,450,000",
-      lastOrder: "2024-01-15",
-      status: "active",
-      products: ["Masa para Muzzarella", "Masa para Ricota", "Cuajo", "Sal"]
-    },
-    {
-      id: "PROV-002",
-      name: "Distribuidora Norte",
-      type: "Insumos Generales",
-      contact: {
-        person: "María González",
-        phone: "+54 11 4567-8902",
-        email: "maria@distribuidoranorte.com",
-        address: "Ruta 9 Km 45, Pilar, Buenos Aires"
-      },
-      paymentTerms: "7 días",
-      reliability: 88,
-      rating: 4.5,
-      totalPurchases: "$890,000",
-      lastOrder: "2024-01-12",
-      status: "active",
-      products: ["Envases", "Etiquetas", "Film", "Cajas"]
-    },
-    {
-      id: "PROV-003",
-      name: "Química Industrial SA",
-      type: "Aditivos",
-      contact: {
-        person: "Roberto Silva",
-        phone: "+54 11 4567-8903",
-        email: "roberto@quimicaindustrial.com",
-        address: "Parque Industrial Norte, Tigre, Buenos Aires"
-      },
-      paymentTerms: "Contado",
-      reliability: 92,
-      rating: 4.6,
-      totalPurchases: "$320,000",
-      lastOrder: "2024-01-10",
-      status: "active",
-      products: ["Ácido Cítrico", "Conservantes", "Colorantes"]
-    },
-    {
-      id: "PROV-004",
-      name: "Transportes Rápidos",
-      type: "Logística",
-      contact: {
-        person: "Juan Pérez",
-        phone: "+54 11 4567-8904",
-        email: "juan@transportesrapidos.com",
-        address: "Av. Libertador 5678, Vicente López, Buenos Aires"
-      },
-      paymentTerms: "30 días",
-      reliability: 85,
-      rating: 4.2,
-      totalPurchases: "$180,000",
-      lastOrder: "2024-01-14",
-      status: "active",
-      products: ["Transporte Refrigerado", "Logística"]
-    },
-    {
-      id: "PROV-005",
-      name: "Lácteos del Valle",
-      type: "Masa y Quesos",
-      contact: {
-        person: "Ana Martínez",
-        phone: "+54 11 4567-8905",
-        email: "ana@lacteosdelvalle.com",
-        address: "Ruta 7 Km 120, Luján, Buenos Aires"
-      },
-      paymentTerms: "21 días",
-      reliability: 78,
-      rating: 3.9,
-      totalPurchases: "$1,200,000",
-      lastOrder: "2024-01-08",
-      status: "warning",
-      products: ["Masa Premium", "Quesos Duros", "Suero"]
-    }
-  ];
+  // Estados principales
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [estadisticas, setEstadisticas] = useState<EstadisticasProveedor | null>(null);
+  const [cronogramaPagos, setCronogramaPagos] = useState<CronogramaPagos | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingCronograma, setLoadingCronograma] = useState(true);
 
-  const purchaseHistory = [
-    {
-      date: "2024-01-15",
-      supplier: "Lácteos San Martín",
-      product: "Masa para Muzzarella",
-      quantity: "500 kg",
-      unitPrice: "$2,800",
-      total: "$1,400,000",
-      status: "delivered"
-    },
-    {
-      date: "2024-01-14",
-      supplier: "Transportes Rápidos",
-      product: "Transporte Refrigerado",
-      quantity: "1 viaje",
-      unitPrice: "$45,000",
-      total: "$45,000",
-      status: "completed"
-    },
-    {
-      date: "2024-01-12",
-      supplier: "Distribuidora Norte",
-      product: "Envases 1kg",
-      quantity: "1000 unidades",
-      unitPrice: "$85",
-      total: "$85,000",
-      status: "delivered"
-    },
-    {
-      date: "2024-01-10",
-      supplier: "Química Industrial SA",
-      product: "Ácido Cítrico",
-      quantity: "25 kg",
-      unitPrice: "$1,200",
-      total: "$30,000",
-      status: "delivered"
-    },
-    {
-      date: "2024-01-08",
-      supplier: "Lácteos del Valle",
-      product: "Masa Premium",
-      quantity: "200 kg",
-      unitPrice: "$3,200",
-      total: "$640,000",
-      status: "pending"
-    }
-  ];
+  // Estados para filtros y búsqueda
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroActivo, setFiltroActivo] = useState<boolean | undefined>(undefined);
 
-  const paymentSchedule = [
-    {
-      supplier: "Lácteos San Martín",
-      amount: "$1,400,000",
-      dueDate: "2024-01-30",
-      daysLeft: 13,
-      status: "pending"
-    },
-    {
-      supplier: "Distribuidora Norte",
-      amount: "$85,000",
-      dueDate: "2024-01-19",
-      daysLeft: 2,
-      status: "urgent"
-    },
-    {
-      supplier: "Transportes Rápidos",
-      amount: "$45,000",
-      dueDate: "2024-02-13",
-      daysLeft: 27,
-      status: "pending"
-    },
-    {
-      supplier: "Química Industrial SA",
-      amount: "$30,000",
-      dueDate: "2024-01-17",
-      daysLeft: 0,
-      status: "overdue"
+  // Estados para formularios y modales
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null);
+  const [proveedorHistorial, setProveedorHistorial] = useState<Proveedor | null>(null);
+  const [historialCompras, setHistorialCompras] = useState<HistorialCompra[]>([]);
+  const [guardando, setGuardando] = useState(false);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+
+  // Estado del formulario
+  const [formData, setFormData] = useState({
+    nombre: '',
+    identificacion: '',
+    contacto: '',
+    telefono: '',
+    correo: '',
+    direccion: '',
+    confiabilidad: 5,
+    dias_pago: 30,
+    notas: '',
+    activo: true
+  });
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  // Cargar proveedores cuando cambian los filtros
+  useEffect(() => {
+    cargarProveedores();
+  }, [busqueda, filtroActivo]);
+
+  const cargarDatos = async () => {
+    await Promise.all([
+      cargarProveedores(),
+      cargarEstadisticas(),
+      cargarCronogramaPagos()
+    ]);
+  };
+
+  const cargarProveedores = async () => {
+    try {
+      setLoading(true);
+      const filtros = {
+        search: busqueda || undefined,
+        activo: filtroActivo,
+        ordering: '-created_at'
+      };
+      
+      const response = await proveedoresService.getProveedores(filtros);
+      // Validar que response y response.results existan antes de asignar
+      if (response && response.results && Array.isArray(response.results)) {
+        setProveedores(response.results);
+      } else {
+        console.warn('Respuesta inválida del servicio de proveedores:', response);
+        setProveedores([]); // Mantener array vacío en caso de respuesta inválida
+      }
+    } catch (error) {
+      console.error('Error al cargar proveedores:', error);
+      toast.error('Error al cargar proveedores');
+      setProveedores([]); // Asegurar que proveedores sea un array vacío en caso de error
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const cargarEstadisticas = async () => {
+    try {
+      setLoadingStats(true);
+      const stats = await proveedoresService.getEstadisticas();
+      setEstadisticas(stats);
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error);
+      toast.error('Error al cargar estadísticas');
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const cargarCronogramaPagos = async () => {
+    try {
+      setLoadingCronograma(true);
+      const cronograma = await cuentasPorPagarService.getCronogramaPagos();
+      setCronogramaPagos(cronograma);
+    } catch (error) {
+      console.error('Error al cargar cronograma de pagos:', error);
+      toast.error('Error al cargar cronograma de pagos');
+    } finally {
+      setLoadingCronograma(false);
+    }
+  };
+
+  const cargarHistorialProveedor = async (proveedor: Proveedor) => {
+    try {
+      setLoadingHistorial(true);
+      setProveedorHistorial(proveedor);
+      setMostrarHistorial(true);
+      
+      const response = await proveedoresService.getHistorialCompras(proveedor.id!);
+      setHistorialCompras(response.results);
+    } catch (error) {
+      console.error('Error al cargar historial:', error);
+      toast.error('Error al cargar historial de compras');
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
+  const handleNuevoProveedor = () => {
+    setProveedorEditando(null);
+    setFormData({
+      nombre: '',
+      identificacion: '',
+      contacto: '',
+      telefono: '',
+      correo: '',
+      direccion: '',
+      confiabilidad: 5,
+      dias_pago: 30,
+      notas: '',
+      activo: true
+    });
+    setMostrarFormulario(true);
+  };
+
+  const handleEditarProveedor = (proveedor: Proveedor) => {
+    setProveedorEditando(proveedor);
+    setFormData({
+      nombre: proveedor.nombre,
+      identificacion: proveedor.identificacion,
+      contacto: proveedor.contacto,
+      telefono: proveedor.telefono,
+      correo: proveedor.correo,
+      direccion: proveedor.direccion,
+      confiabilidad: proveedor.confiabilidad,
+      dias_pago: proveedor.dias_pago,
+      notas: proveedor.notas || '',
+      activo: proveedor.activo
+    });
+    setMostrarFormulario(true);
+  };
+
+  const handleGuardarProveedor = async () => {
+    try {
+      setGuardando(true);
+      
+      if (proveedorEditando) {
+        await proveedoresService.actualizarProveedor(proveedorEditando.id!, formData);
+        toast.success('Proveedor actualizado exitosamente');
+      } else {
+        await proveedoresService.crearProveedor(formData);
+        toast.success('Proveedor creado exitosamente');
+      }
+      
+      setMostrarFormulario(false);
+      await cargarProveedores();
+      await cargarEstadisticas();
+    } catch (error) {
+      console.error('Error al guardar proveedor:', error);
+      toast.error('Error al guardar proveedor');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const handleNuevoPedido = (proveedor: Proveedor) => {
+    toast.info(`Creando nuevo pedido para ${proveedor.nombre}`);
+    // Aquí se podría navegar a la sección de órdenes de compra
+    // o abrir un modal para crear una nueva orden
+  };
 
   const getReliabilityColor = (reliability: number) => {
     if (reliability >= 90) return "text-green-600";
@@ -195,13 +231,8 @@ export function SuppliersSection() {
     return "text-red-600";
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "text-green-600 bg-green-50";
-      case "warning": return "text-yellow-600 bg-yellow-50";
-      case "inactive": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
-    }
+  const getStatusColor = (status: boolean) => {
+    return status ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50";
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -213,22 +244,55 @@ export function SuppliersSection() {
     }
   };
 
+  const formatearMoneda = (monto: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(monto);
+  };
+
+  if (loading && loadingStats && loadingCronograma) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando módulo de proveedores...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl mb-2">Proveedores</h1>
-        <p className="text-muted-foreground">Gestiona tus proveedores, condiciones de pago e historial de compras.</p>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Proveedores</h1>
+          <p className="text-gray-600">Gestiona tus proveedores, condiciones de pago e historial de compras.</p>
+        </div>
+        <Button 
+          onClick={handleNuevoProveedor}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md border-0"
+          style={{ backgroundColor: '#1E40AF', color: '#FFFFFF' }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Proveedor
+        </Button>
       </div>
 
-      {/* Suppliers Overview */}
+      {/* Estadísticas generales */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Truck className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Proveedores</p>
-                <p className="text-2xl font-bold">{suppliers.length}</p>
+                <p className="text-sm text-gray-600">Total Proveedores</p>
+                <p className="text-2xl font-bold">
+                  {loadingStats ? '...' : estadisticas?.total_proveedores || 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -239,8 +303,10 @@ export function SuppliersSection() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Activos</p>
-                <p className="text-2xl font-bold">{suppliers.filter(s => s.status === "active").length}</p>
+                <p className="text-sm text-gray-600">Activos</p>
+                <p className="text-2xl font-bold">
+                  {loadingStats ? '...' : estadisticas?.proveedores_activos || 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -249,10 +315,12 @@ export function SuppliersSection() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-red-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Compras Totales</p>
-                <p className="text-2xl font-bold">$5.04M</p>
+                <p className="text-sm text-gray-600">Deuda Total</p>
+                <p className="text-2xl font-bold">
+                  {loadingStats ? '...' : formatearMoneda(estadisticas?.total_deuda || 0)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -261,207 +329,441 @@ export function SuppliersSection() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-600" />
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Rating Promedio</p>
-                <p className="text-2xl font-bold">4.4</p>
+                <p className="text-sm text-gray-600">Cuentas Vencidas</p>
+                <p className="text-2xl font-bold">
+                  {loadingCronograma ? '...' : cronogramaPagos?.vencidas?.length || 0}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Suppliers List */}
+      {/* Controles de búsqueda y filtrado */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Truck className="w-5 h-5" />
-            Lista de Proveedores
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {suppliers.map((supplier) => (
-              <div key={supplier.id} className="p-4 border rounded-lg space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium">{supplier.name}</h4>
-                    <p className="text-sm text-muted-foreground">{supplier.id}</p>
-                    <Badge variant="outline" className="mt-1">{supplier.type}</Badge>
-                  </div>
-                  <div className="text-right">
-                    <Badge className={getStatusColor(supplier.status)}>
-                      {supplier.status === "active" ? "Activo" : 
-                       supplier.status === "warning" ? "Advertencia" : "Inactivo"}
-                    </Badge>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">{supplier.rating}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{supplier.contact.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{supplier.contact.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs">{supplier.contact.address}</span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Condiciones de pago:</p>
-                    <p className="font-medium">{supplier.paymentTerms}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Confiabilidad:</p>
-                    <p className={`font-medium ${getReliabilityColor(supplier.reliability)}`}>
-                      {supplier.reliability}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Total compras:</p>
-                    <p className="font-medium">{supplier.totalPurchases}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Último pedido:</p>
-                    <p className="font-medium">{supplier.lastOrder}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Productos:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {supplier.products.map((product) => (
-                      <Badge key={product} variant="secondary" className="text-xs">
-                        {product}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 pt-2 border-t">
-                  <button className="flex-1 px-3 py-2 text-sm border rounded hover:bg-muted transition-colors">
-                    Ver Historial
-                  </button>
-                  <button className="flex-1 px-3 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
-                    Nuevo Pedido
-                  </button>
-                </div>
-              </div>
-            ))}
+        <CardContent className="p-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1 relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Buscar por nombre, identificación o correo..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filtroActivo?.toString() || 'todos'} onValueChange={(value) => {
+              if (value === 'todos') setFiltroActivo(undefined);
+              else setFiltroActivo(value === 'true');
+            }}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="true">Activos</SelectItem>
+                <SelectItem value="false">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Purchase History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Historial de Compras Recientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {purchaseHistory.map((purchase, index) => (
-                <div key={index} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-sm">{purchase.supplier}</h5>
-                    <Badge variant={purchase.status === "delivered" ? "default" : 
-                                  purchase.status === "completed" ? "secondary" : "outline"}>
-                      {purchase.status === "delivered" ? "Entregado" :
-                       purchase.status === "completed" ? "Completado" : "Pendiente"}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Producto:</span>
-                      <span className="font-medium">{purchase.product}</span>
+      {/* Lista de proveedores */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Lista de Proveedores ({proveedores?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (proveedores?.length || 0) === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay proveedores</h3>
+              <p className="text-gray-500 mb-4">
+                {busqueda || filtroActivo !== undefined 
+                  ? 'No se encontraron proveedores con los filtros aplicados'
+                  : 'Comienza agregando tu primer proveedor'
+                }
+              </p>
+              <Button 
+                onClick={handleNuevoProveedor}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md border-0"
+                style={{ backgroundColor: '#1E40AF', color: '#FFFFFF' }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Proveedor
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(proveedores || []).map((proveedor) => (
+                <Card key={proveedor.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-lg">{proveedor.nombre}</h4>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(proveedor.activo)}>
+                          {proveedor.activo ? "Activo" : "Inactivo"}
+                        </Badge>
+                        {proveedor.is_demo && (
+                          <Badge variant="outline" className="text-xs">Demo</Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Cantidad:</span>
-                      <span>{purchase.quantity}</span>
+                    
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">ID:</span>
+                        <span>{proveedor.identificacion}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        <span>{proveedor.telefono}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        <span className="text-xs">{proveedor.correo}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        <span className="text-xs">{proveedor.direccion}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Precio unitario:</span>
-                      <span>{purchase.unitPrice}</span>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                      <div>
+                        <p className="text-gray-600">Confiabilidad:</p>
+                        <p className={`font-medium ${getReliabilityColor(proveedor.confiabilidad)}`}>
+                          {proveedor.confiabilidad}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Días pago:</p>
+                        <p className="font-medium">{proveedor.dias_pago} días</p>
+                      </div>
+                      {proveedor.total_deuda && proveedor.total_deuda > 0 && (
+                        <>
+                          <div>
+                            <p className="text-gray-600">Deuda:</p>
+                            <p className="font-medium text-red-600">
+                              {formatearMoneda(proveedor.total_deuda)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Cuentas:</p>
+                            <p className="font-medium text-red-600">
+                              {proveedor.cuentas_pendientes || 0}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div className="flex justify-between border-t pt-1">
-                      <span className="text-muted-foreground">Total:</span>
-                      <span className="font-bold">{purchase.total}</span>
+                    
+                    <div className="flex gap-2 mt-4 pt-3 border-t">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => cargarHistorialProveedor(proveedor)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Historial
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditarProveedor(proveedor)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md border-0"
+                        style={{ backgroundColor: '#1E40AF', color: '#FFFFFF' }}
+                        onClick={() => handleNuevoPedido(proveedor)}
+                      >
+                        <Package className="w-4 h-4 mr-1" />
+                        Pedido
+                      </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {purchase.date}
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Payment Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Cronograma de Pagos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {paymentSchedule.map((payment, index) => (
-                <div key={index} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-sm">{payment.supplier}</h5>
-                    <Badge className={getPaymentStatusColor(payment.status)}>
-                      {payment.status === "pending" ? "Pendiente" :
-                       payment.status === "urgent" ? "Urgente" : "Vencido"}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Monto:</span>
-                      <span className="font-bold">{payment.amount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Vencimiento:</span>
-                      <span>{payment.dueDate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Días restantes:</span>
-                      <span className={`font-medium ${
-                        payment.daysLeft <= 0 ? 'text-red-600' :
-                        payment.daysLeft <= 3 ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
-                        {payment.daysLeft <= 0 ? 'Vencido' : `${payment.daysLeft} días`}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {payment.status === "urgent" || payment.status === "overdue" && (
-                    <button className="w-full mt-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
-                      Pagar Ahora
-                    </button>
-                  )}
+      {/* Cronograma de pagos */}
+      {cronogramaPagos && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Pagos Próximos a Vencer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingCronograma ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-              ))}
+              ) : (cronogramaPagos?.proximas?.length || 0) === 0 ? (
+                <p className="text-gray-500 text-center py-4">No hay pagos próximos a vencer</p>
+              ) : (
+                <div className="space-y-3">
+                  {(cronogramaPagos?.proximas || []).slice(0, 5).map((pago) => (
+                    <div key={pago.id} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="font-medium text-sm">{pago.proveedor_nombre}</h5>
+                        <Badge className={getPaymentStatusColor(pago.estado)}>
+                          {pago.estado === "pending" ? "Pendiente" :
+                           pago.estado === "urgent" ? "Urgente" : "Vencido"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monto:</span>
+                          <span className="font-bold">{formatearMoneda(pago.monto)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Vencimiento:</span>
+                          <span>{new Date(pago.fecha_vencimiento).toLocaleDateString()}</span>
+                        </div>
+                        {pago.numero_factura && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Factura:</span>
+                            <span>{pago.numero_factura}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Pagos Vencidos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingCronograma ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (cronogramaPagos?.vencidas?.length || 0) === 0 ? (
+                <p className="text-gray-500 text-center py-4">No hay pagos vencidos</p>
+              ) : (
+                <div className="space-y-3">
+                  {(cronogramaPagos?.vencidas || []).slice(0, 5).map((pago) => (
+                    <div key={pago.id} className="p-3 border rounded-lg bg-red-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="font-medium text-sm">{pago.proveedor_nombre}</h5>
+                        <Badge className="text-red-600 bg-red-100">Vencido</Badge>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monto:</span>
+                          <span className="font-bold text-red-600">{formatearMoneda(pago.monto)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Vencimiento:</span>
+                          <span className="text-red-600">{new Date(pago.fecha_vencimiento).toLocaleDateString()}</span>
+                        </div>
+                        {pago.numero_factura && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Factura:</span>
+                            <span>{pago.numero_factura}</span>
+                          </div>
+                        )}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="w-full mt-2 bg-red-600 hover:bg-red-700"
+                        onClick={() => toast.info(`Procesando pago para ${pago.proveedor_nombre}`)}
+                      >
+                        Pagar Ahora
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de formulario de proveedor */}
+      <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {proveedorEditando ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="nombre">Nombre *</Label>
+              <Input
+                id="nombre"
+                value={formData.nombre}
+                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                placeholder="Nombre del proveedor"
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <Label htmlFor="identificacion">Identificación *</Label>
+              <Input
+                id="identificacion"
+                value={formData.identificacion}
+                onChange={(e) => setFormData({...formData, identificacion: e.target.value})}
+                placeholder="CUIT/DNI"
+              />
+            </div>
+            <div>
+              <Label htmlFor="contacto">Persona de Contacto *</Label>
+              <Input
+                id="contacto"
+                value={formData.contacto}
+                onChange={(e) => setFormData({...formData, contacto: e.target.value})}
+                placeholder="Nombre del contacto"
+              />
+            </div>
+            <div>
+              <Label htmlFor="telefono">Teléfono *</Label>
+              <Input
+                id="telefono"
+                value={formData.telefono}
+                onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                placeholder="+54 11 1234-5678"
+              />
+            </div>
+            <div>
+              <Label htmlFor="correo">Correo Electrónico *</Label>
+              <Input
+                id="correo"
+                type="email"
+                value={formData.correo}
+                onChange={(e) => setFormData({...formData, correo: e.target.value})}
+                placeholder="correo@proveedor.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dias_pago">Días de Pago</Label>
+              <Input
+                id="dias_pago"
+                type="number"
+                value={formData.dias_pago}
+                onChange={(e) => setFormData({...formData, dias_pago: parseInt(e.target.value) || 30})}
+                placeholder="30"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="direccion">Dirección</Label>
+              <Input
+                id="direccion"
+                value={formData.direccion}
+                onChange={(e) => setFormData({...formData, direccion: e.target.value})}
+                placeholder="Dirección completa"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={formData.notas}
+                onChange={(e) => setFormData({...formData, notas: e.target.value})}
+                placeholder="Notas adicionales sobre el proveedor"
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setMostrarFormulario(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleGuardarProveedor}
+              disabled={guardando || !formData.nombre || !formData.identificacion}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md border-0"
+              style={{ backgroundColor: '#1E40AF', color: '#FFFFFF' }}
+            >
+              {guardando ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de historial de compras */}
+      <Dialog open={mostrarHistorial} onOpenChange={setMostrarHistorial}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Historial de Compras - {proveedorHistorial?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {loadingHistorial ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : historialCompras.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No hay historial de compras disponible</p>
+            ) : (
+              <div className="space-y-3">
+                {historialCompras.map((compra) => (
+                  <div key={compra.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h5 className="font-medium">Orden #{compra.numero}</h5>
+                        <p className="text-sm text-gray-600">{new Date(compra.fecha).toLocaleDateString()}</p>
+                      </div>
+                      <Badge variant="outline">{compra.estado}</Badge>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total:</span>
+                        <span className="font-bold">{formatearMoneda(compra.total)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Items:</span>
+                        <span>{compra.items_count}</span>
+                      </div>
+                      {compra.productos.length > 0 && (
+                        <div>
+                          <span className="text-gray-600">Productos:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {compra.productos.map((producto, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {producto}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -33,20 +33,19 @@ export interface ClienteFilters {
 
 // Tipos para operaciones específicas
 export interface VentaRapidaItem {
-  nombre: string;
+  producto_id: string;
+  producto_nombre: string;
   cantidad: number;
-  precio: number;
+  precio_unitario: number;
+  subtotal: number;
 }
 
 export interface VentaRapidaPayload {
   cliente_id: number;
-  items: Array<{
-    producto_id: number;
-    cantidad: number;
-    precio: number;
-  }>;
-  forma_pago: string;
+  items: VentaRapidaItem[];
+  metodo_pago: string;
   observaciones: string;
+  total: number;
 }
 
 export interface CobroPayload {
@@ -63,6 +62,7 @@ export interface Comprobante {
 }
 
 export interface ProductoSugerido {
+  id: string;
   nombre: string;
   precio: number;
 }

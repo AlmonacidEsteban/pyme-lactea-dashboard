@@ -206,6 +206,49 @@ class AuthService {
 
   // Obtener información del usuario
   async getUserInfo(): Promise<User> {
+    // En producción, usar modo demo
+    if (this.isProduction) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const demoUser: User = {
+            id: 1,
+            username: 'demo_user',
+            email: 'demo@example.com',
+            first_name: 'Demo',
+            last_name: 'User',
+            full_name: 'Demo User',
+            phone_number: '',
+            company_name: 'Empresa Demo',
+            company_type: 'Láctea',
+            position: 'Administrador',
+            profile_picture: null,
+            is_verified: true,
+            date_joined: new Date().toISOString(),
+            last_login: new Date().toISOString(),
+            profile: {
+              id: 1,
+              company_address: '',
+              company_city: '',
+              company_state: '',
+              company_country: '',
+              company_postal_code: '',
+              tax_id: '',
+              website: '',
+              timezone: 'America/Lima',
+              language: 'es',
+              currency: 'PEN',
+              email_notifications: true,
+              sms_notifications: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              user: 1
+            }
+          };
+          resolve(demoUser);
+        }, 500); // Simular delay de red
+      });
+    }
+
     try {
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.USER_INFO), {
         method: 'GET',

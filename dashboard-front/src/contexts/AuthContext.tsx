@@ -128,8 +128,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           console.log('✅ AuthContext - Estado de autenticación actualizado exitosamente');
         } else {
-          console.log('❌ AuthContext - Usuario no autenticado, estableciendo loading=false');
-          dispatch({ type: 'SET_LOADING', payload: false });
+          console.log('❌ AuthContext - Usuario no autenticado');
+          
+          // En modo producción (demo), hacer auto-login
+          const isProduction = import.meta.env.VITE_APP_ENV === 'production' || import.meta.env.PROD;
+          if (isProduction) {
+            console.log('🎯 AuthContext - Modo demo detectado, realizando auto-login...');
+            try {
+              const response = await authService.login({
+                identifier: 'demo@example.com',
+                password: 'demo123'
+              });
+              
+              console.log('✅ AuthContext - Auto-login exitoso:', response);
+              
+              dispatch({ 
+                type: 'AUTH_SUCCESS', 
+                payload: { 
+                  user: response.user, 
+                  tokens: response.tokens 
+                } 
+              });
+            } catch (autoLoginError) {
+              console.error('❌ AuthContext - Error en auto-login:', autoLoginError);
+              dispatch({ type: 'SET_LOADING', payload: false });
+            }
+          } else {
+            console.log('❌ AuthContext - Modo desarrollo, estableciendo loading=false');
+            dispatch({ type: 'SET_LOADING', payload: false });
+          }
         }
       } catch (error) {
         console.error('❌ AuthContext - Error al inicializar autenticación:', error);
