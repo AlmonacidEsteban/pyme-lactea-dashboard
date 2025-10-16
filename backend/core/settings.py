@@ -29,8 +29,15 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
-allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+
+# Asegurar que siempre incluya localhost y 127.0.0.1 en desarrollo
+if DEBUG:
+    if '127.0.0.1' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('127.0.0.1')
+    if 'localhost' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('localhost')
 
 
 # Application definition
@@ -222,6 +229,12 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Solo en desarrollo
+
+# Configuración de CSRF para el frontend
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
+]
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'

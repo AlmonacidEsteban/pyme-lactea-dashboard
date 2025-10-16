@@ -12,11 +12,14 @@ export const useRubros = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.get('/clientes/rubros/');
-      setRubros(response);
+      const response = await apiClient.get('/rubros/');
+      // Manejar respuesta paginada de Django REST Framework
+      const rubrosData = response.results || response;
+      setRubros(Array.isArray(rubrosData) ? rubrosData : []);
     } catch (err) {
       setError('Error al cargar los rubros');
       console.error('Error fetching rubros:', err);
+      setRubros([]); // Asegurar que rubros sea siempre un array
     } finally {
       setLoading(false);
     }
@@ -24,7 +27,7 @@ export const useRubros = () => {
 
   const createRubro = async (rubroData: { nombre: string; descripcion?: string }) => {
     try {
-      const response = await apiClient.post('/clientes/rubros/', rubroData);
+      const response = await apiClient.post('/rubros/', rubroData);
       setRubros(prev => [...prev, response]);
       return response;
     } catch (err) {
@@ -35,7 +38,7 @@ export const useRubros = () => {
 
   const updateRubro = async (id: number, rubroData: Partial<Rubro>) => {
     try {
-      const response = await apiClient.patch(`/clientes/rubros/${id}/`, rubroData);
+      const response = await apiClient.patch(`/rubros/${id}/`, rubroData);
       setRubros(prev => prev.map(rubro => 
         rubro.id === id ? response : rubro
       ));
@@ -48,7 +51,7 @@ export const useRubros = () => {
 
   const deleteRubro = async (id: number) => {
     try {
-      await apiClient.delete(`/clientes/rubros/${id}/`);
+      await apiClient.delete(`/rubros/${id}/`);
       setRubros(prev => prev.filter(rubro => rubro.id !== id));
     } catch (err) {
       console.error('Error deleting rubro:', err);

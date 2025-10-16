@@ -40,6 +40,7 @@ export function ClienteFormDialog({
 
   useEffect(() => {
     if (cliente) {
+      console.log("🔄 Cargando datos del cliente para edición:", cliente);
       setFormData({
         nombre: cliente.nombre || "",
         identificacion: cliente.identificacion || "",
@@ -52,7 +53,9 @@ export function ClienteFormDialog({
         rubro: cliente.rubro || null,
         activo: cliente.activo ?? true
       })
+      console.log("📝 FormData inicializado con rubro:", cliente.rubro);
     } else {
+      console.log("➕ Inicializando formulario para nuevo cliente");
       setFormData({
         nombre: "",
         identificacion: "",
@@ -75,18 +78,25 @@ export function ClienteFormDialog({
       return
     }
 
+    console.log("💾 Guardando cliente con datos:", formData);
+    console.log("🏷️ Rubro seleccionado:", formData.rubro);
+
     setLoading(true)
     try {
       await onSave(formData)
+      console.log("✅ Cliente guardado exitosamente");
       onOpenChange(false)
     } catch (error) {
-      console.error("Error al guardar cliente:", error)
+      console.error("❌ Error al guardar cliente:", error)
     } finally {
       setLoading(false)
     }
   }
 
   const handleInputChange = (field: keyof Cliente, value: any) => {
+    if (field === 'rubro') {
+      console.log("🏷️ Cambiando rubro a:", value);
+    }
     setFormData(prev => ({
       ...prev,
       [field]: value

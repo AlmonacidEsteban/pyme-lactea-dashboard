@@ -32,6 +32,7 @@ class ClientesService {
     }
 
     const url = `${this.baseUrl}${params.toString() ? `?${params.toString()}` : ''}`;
+    console.log("📋 Cargando lista de clientes desde:", url);
     
     const response = await authService.makeAuthenticatedRequest(url, {
       method: 'GET',
@@ -41,7 +42,9 @@ class ClientesService {
       throw new Error(`Error al obtener clientes: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log("📋 Lista de clientes cargada:", result.results?.length || 0, "clientes");
+    return result;
   }
 
   // Obtener cliente por ID
@@ -77,6 +80,8 @@ class ClientesService {
 
   // Actualizar cliente
   async update(id: number, data: Partial<Cliente>): Promise<Cliente> {
+    console.log("🔄 ClientesService.update - ID:", id, "Datos enviados:", data);
+    
     const response = await authService.makeAuthenticatedRequest(`${this.baseUrl}${id}/`, {
       method: 'PATCH',
       headers: {
@@ -87,10 +92,13 @@ class ClientesService {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error("❌ Error en actualización:", errorData);
       throw new Error(errorData.detail || 'Error al actualizar cliente');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log("✅ Cliente actualizado exitosamente:", result);
+    return result;
   }
 
   // Eliminar cliente

@@ -30,7 +30,7 @@ echo  Frontend: http://127.0.0.1:3000/
 echo  Admin:    http://127.0.0.1:8000/admin/
 echo ========================================
 echo.
-echo IMPORTANTE: Si ves errores de puerto 3015,
+echo IMPORTANTE: Si ves errores de conexion,
 echo cierra el navegador y abre una nueva ventana
 echo en modo incognito para evitar cache.
 echo.

@@ -1,13 +1,13 @@
 // Configuración de la API
 const getBaseURL = () => {
-  // Si hay una variable de entorno específica, usarla
-  if (import.meta.env.VITE_API_URL) {
-    return `${import.meta.env.VITE_API_URL}/api`;
+  // En desarrollo, usar el proxy configurado en Vite
+  if (import.meta.env.DEV) {
+    return '/api';
   }
   
-  // En desarrollo, usar el servidor local
-  if (import.meta.env.DEV) {
-    return 'http://127.0.0.1:8000/api';
+  // Si hay una variable de entorno específica para producción, usarla
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL}/api`;
   }
   
   // En producción, usar el backend desplegado en Render

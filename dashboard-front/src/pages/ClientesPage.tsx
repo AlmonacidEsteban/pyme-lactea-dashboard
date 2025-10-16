@@ -39,7 +39,18 @@ export function ClientesPage() {
     setLoading(true)
     try {
       const response = await clientesService.list(filters)
-      setClientes(response.results || [])
+      const clientesList = response.results || []
+      setClientes(clientesList)
+      console.log("📋 Estado de clientes actualizado:", clientesList.length, "clientes");
+      
+      // Si hay un cliente en edición, actualizarlo con los datos más recientes
+      if (editingCliente) {
+        const clienteActualizado = clientesList.find(c => c.id === editingCliente.id)
+        if (clienteActualizado) {
+          console.log("🔄 Actualizando editingCliente con datos frescos:", clienteActualizado);
+          setEditingCliente(clienteActualizado)
+        }
+      }
     } catch (error) {
       console.error("Error al cargar clientes:", error)
       toast.error("Error al cargar la lista de clientes")
@@ -75,6 +86,8 @@ export function ClientesPage() {
   }
 
   const handleEditCliente = (cliente: Cliente) => {
+    console.log("✏️ Abriendo cliente para edición:", cliente);
+    console.log("🏷️ Rubro del cliente a editar:", cliente.rubro);
     setEditingCliente(cliente)
     setFormOpen(true)
   }
@@ -82,17 +95,22 @@ export function ClientesPage() {
   const handleSaveCliente = async (clienteData: Partial<Cliente>) => {
     try {
       if (editingCliente) {
-        await clientesService.update(editingCliente.id, clienteData)
+        console.log("🔄 Actualizando cliente:", editingCliente.id, "con datos:", clienteData);
+        const updatedCliente = await clientesService.update(editingCliente.id, clienteData)
+        console.log("✅ Cliente actualizado, respuesta del servidor:", updatedCliente);
         toast.success("Cliente actualizado correctamente")
       } else {
+        console.log("➕ Creando nuevo cliente con datos:", clienteData);
         await clientesService.create(clienteData)
         toast.success("Cliente creado correctamente")
       }
       setFormOpen(false)
       setEditingCliente(undefined)
+      console.log("🔄 Recargando lista de clientes...");
       await loadClientes()
+      console.log("✅ Lista de clientes recargada");
     } catch (error) {
-      console.error("Error al guardar cliente:", error)
+      console.error("❌ Error al guardar cliente:", error)
       toast.error("Error al guardar el cliente")
       throw error
     }

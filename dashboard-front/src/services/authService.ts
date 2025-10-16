@@ -106,7 +106,7 @@ class AuthService {
       
       // Mejorar el mensaje de error para problemas de conexión
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se puede conectar al servidor. Asegúrate de que el backend esté ejecutándose en http://127.0.0.1:8000');
+        throw new Error('No se puede conectar al servidor. Asegúrate de que el backend esté ejecutándose correctamente.');
       }
       
       throw error;
