@@ -4,6 +4,17 @@ import { API_CONFIG, getAuthHeaders } from '../config/api';
 const API_BASE = `${API_CONFIG.BASE_URL}/proveedores/proveedores`.replace(/\/+/g, '/').replace(':/', '://');
 
 // Tipos de datos
+export interface ProductoSimple {
+  id: number;
+  nombre: string;
+  sku?: string;
+  marca_nombre?: string;
+  categoria_nombre?: string;
+  precio: number;
+  stock: number;
+  unidad: string;
+}
+
 export interface Proveedor {
   id?: number;
   nombre: string;
@@ -16,6 +27,8 @@ export interface Proveedor {
   dias_pago: number;
   notas?: string;
   activo: boolean;
+  productos?: ProductoSimple[];
+  productos_ids?: number[];
   is_demo?: boolean;
   created_at?: string;
   updated_at?: string;

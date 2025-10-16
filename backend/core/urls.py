@@ -20,6 +20,8 @@ from django.middleware.csrf import get_token
 from django.urls import include, path
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.routers import DefaultRouter
+from clientes.views import RubroViewSet
 
 
 @csrf_exempt
@@ -386,10 +388,32 @@ def health_check(request):
     return JsonResponse({"status": "healthy", "message": "Mi Pyme Láctea API is running"})
 
 
+def api_root(request):
+    return JsonResponse({
+        "endpoints": [
+            "/api/health/",
+            "/api/auth/",
+            "/api/clientes/",
+            "/api/rubros/",
+            "/api/proveedores/",
+            "/api/rrhh/",
+            "/api/compras/",
+            "/api/ventas/",
+            "/api/productos/",
+            "/api/finanzas/",
+        ]
+    })
+
+
+# Router para rubros al nivel raíz de la API
+rubro_router = DefaultRouter()
+rubro_router.register(r"rubros", RubroViewSet, basename="rubro")
+
 urlpatterns = [
     path("", home),
     path("demo/", demo_dashboard),
     path('admin/', admin.site.urls),
+    path("api/", api_root, name="api_root"),
     path("api/health/", health_check, name="health_check"),
     
     # API de autenticación
@@ -397,6 +421,7 @@ urlpatterns = [
     
     # APIs de módulos
     path("api/clientes/", include("clientes.urls")),
+    path("api/", include(rubro_router.urls)),  # /api/rubros/
     path("api/proveedores/", include("proveedores.urls")),
     path("api/rrhh/", include("recursos_humanos.urls")),
     path("api/compras/", include("compras.urls")),

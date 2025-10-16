@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { RubroSelector } from "@/components/RubroSelector"
 import { Cliente } from "@/types/clientes"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -33,6 +34,7 @@ export function ClienteFormDialog({
     zona: "",
     tipo: "minorista",
     limite_credito: 0,
+    rubro: null,
     activo: true
   })
 
@@ -47,6 +49,7 @@ export function ClienteFormDialog({
         zona: cliente.zona || "",
         tipo: cliente.tipo || "minorista",
         limite_credito: cliente.limite_credito || 0,
+        rubro: cliente.rubro || null,
         activo: cliente.activo ?? true
       })
     } else {
@@ -59,6 +62,7 @@ export function ClienteFormDialog({
         zona: "",
         tipo: "minorista",
         limite_credito: 0,
+        rubro: null,
         activo: true
       })
     }
@@ -97,7 +101,7 @@ export function ClienteFormDialog({
             {cliente ? "Editar Cliente" : "Nuevo Cliente"}
           </DialogTitle>
           <DialogDescription>
-            {cliente ? "Modifica los datos del cliente existente." : "Completa la información para crear un nuevo cliente."}
+            {cliente ? "Modifica los datos del cliente existente." : "Completa la información para crear un nuevo cliente. Puedes crear múltiples sucursales con el mismo CUIT usando nombres diferentes."}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,23 +109,23 @@ export function ClienteFormDialog({
           {/* Información básica */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre *</Label>
+              <Label htmlFor="nombre">Nombre / Sucursal *</Label>
               <Input
                 id="nombre"
                 value={formData.nombre}
                 onChange={(e) => handleInputChange("nombre", e.target.value)}
-                placeholder="Nombre del cliente"
+                placeholder="Ej: Supermercado Central - Sucursal Norte"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="identificacion">Identificación *</Label>
+              <Label htmlFor="identificacion">CUIT / Identificación *</Label>
               <Input
                 id="identificacion"
                 value={formData.identificacion}
                 onChange={(e) => handleInputChange("identificacion", e.target.value)}
-                placeholder="DNI, CUIT, etc."
+                placeholder="Ej: 20-12345678-9 (puede repetirse para sucursales)"
                 required
               />
             </div>
@@ -135,7 +139,7 @@ export function ClienteFormDialog({
                 id="telefono"
                 value={formData.telefono}
                 onChange={(e) => handleInputChange("telefono", e.target.value)}
-                placeholder="+54 9 11 1234-5678"
+                placeholder="+54 9 11 1234-5678 (puede ser el mismo para sucursales)"
               />
             </div>
 
@@ -204,6 +208,15 @@ export function ClienteFormDialog({
                 placeholder="0.00"
               />
             </div>
+          </div>
+
+          {/* Rubro del negocio */}
+          <div className="space-y-2">
+            <Label htmlFor="rubro">Rubro del negocio</Label>
+            <RubroSelector
+              value={formData.rubro}
+              onChange={(rubroId) => handleInputChange("rubro", rubroId)}
+            />
           </div>
 
           {/* Estado activo */}

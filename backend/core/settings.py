@@ -172,6 +172,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
@@ -209,10 +210,12 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3000",  # Frontend principal
     "http://localhost:3001",
-    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite dev server alternativo
+    "http://127.0.0.1:3000",  # Frontend principal
     "http://127.0.0.1:3001",
+    "http://127.0.0.1:5173",  # Vite dev server alternativo
     "https://almonacidesteban.github.io",  # GitHub Pages
 ]
 

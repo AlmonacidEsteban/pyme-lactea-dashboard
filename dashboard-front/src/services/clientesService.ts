@@ -228,16 +228,20 @@ class ClientesService {
 
   // Obtener productos sugeridos
   async getProductosSugeridos(clienteId?: number) {
-    const url = clienteId 
-      ? `${this.baseUrl}${clienteId}/productos-sugeridos/`
-      : `${this.baseUrl}productos-sugeridos/`;
-      
+    // Exigir clienteId si el endpoint es de detalle
+    if (!clienteId) {
+      throw new Error('clienteId es requerido para productos sugeridos');
+    }
+
+    const url = `${this.baseUrl}${clienteId}/productos-sugeridos/`;
+
     const response = await authService.makeAuthenticatedRequest(url, {
       method: 'GET',
     });
 
     if (!response.ok) {
-      throw new Error(`Error al obtener productos sugeridos: ${response.statusText}`);
+      const body = await response.text().catch(() => '');
+      throw new Error(`Error al obtener productos sugeridos: ${response.status} ${response.statusText} ${body}`);
     }
 
     return response.json();

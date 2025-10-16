@@ -2,6 +2,14 @@
 
 export type ClienteTipo = 'minorista' | 'mayorista' | 'distribuidor';
 
+export interface Rubro {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  activo: boolean;
+  fecha_creacion: string;
+}
+
 export interface Cliente {
   id: number;
   nombre: string;
@@ -13,6 +21,8 @@ export interface Cliente {
   zona?: string;
   tipo?: ClienteTipo;
   limite_credito?: number;
+  rubro?: number | null; // ID del rubro del negocio
+  rubro_nombre?: string; // Nombre del rubro (solo lectura)
   activo?: boolean;
   deuda?: number;
   ultima_compra?: string;

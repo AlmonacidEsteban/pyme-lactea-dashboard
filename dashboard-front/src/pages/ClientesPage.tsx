@@ -33,7 +33,6 @@ export function ClientesPage() {
   // Cargar datos iniciales
   useEffect(() => {
     loadClientes()
-    loadProductos()
   }, [filters])
 
   const loadClientes = async () => {
@@ -49,12 +48,13 @@ export function ClientesPage() {
     }
   }
 
-  const loadProductos = async () => {
+  const loadProductos = async (clienteId: string) => {
     try {
-      const productos = await clientesService.getProductosSugeridos()
+      const productos = await clientesService.getProductosSugeridos(parseInt(clienteId))
       setProductos(productos)
     } catch (error) {
       console.error("Error al cargar productos:", error)
+      setProductos([])
     }
   }
 

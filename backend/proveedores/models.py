@@ -22,6 +22,13 @@ class Proveedor(models.Model):
     )
     notas = models.TextField(blank=True)
     activo = models.BooleanField(default=True)
+    # Relación Many-to-Many con productos que vende este proveedor
+    productos = models.ManyToManyField(
+        'productos.Producto',
+        blank=True,
+        related_name='proveedores',
+        help_text="Productos que vende este proveedor"
+    )
     is_demo = models.BooleanField(default=False, help_text="Marca si es dato de demostración")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,7 +58,7 @@ class CuentaPorPagar(models.Model):
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pending')
     descripcion = models.CharField(max_length=200, blank=True)
     numero_factura = models.CharField(max_length=50, blank=True)
-    orden_compra = models.ForeignKey('compras.OrdenCompra', on_delete=models.SET_NULL, null=True, blank=True)
+    # orden_compra = models.ForeignKey('compras.OrdenCompra', on_delete=models.SET_NULL, null=True, blank=True)
     is_demo = models.BooleanField(default=False, help_text="Marca si es dato de demostración")
     
     class Meta:

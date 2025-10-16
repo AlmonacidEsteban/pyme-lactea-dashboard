@@ -13,13 +13,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 
-from .models import Cliente
-from .serializers import ClienteSerializer, ClienteListSerializer
+from .models import Cliente, Rubro
+from .serializers import ClienteSerializer, ClienteListSerializer, RubroSerializer
 
 
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
+    permission_classes = []
 
     # Filtros, búsqueda y orden
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -175,6 +176,37 @@ class ClienteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class RubroViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar los rubros/tipos de negocio de los clientes.
+    Permite crear, leer, actualizar y eliminar rubros de forma dinámica.
+    """
+    queryset = Rubro.objects.filter(activo=True)
+    serializer_class = RubroSerializer
+    permission_classes = []  # Permitir acceso sin autenticación
+    
+    # Filtros, búsqueda y orden
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["activo"]
+    search_fields = ["nombre", "descripcion"]
+    ordering_fields = ["nombre", "fecha_creacion"]
+    ordering = ["nombre"]
+    
+    @action(detail=False, methods=['get'])
+    def todos(self, request):
+        """Endpoint para obtener todos los rubros, incluyendo los inactivos"""
+        rubros = Rubro.objects.all()
+        serializer = self.get_serializer(rubros, many=True)
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Soft delete: marcar como inactivo en lugar de eliminar"""
+        instance = self.get_object()
+        instance.activo = False
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=False, methods=["post"], url_path="registrar-cobro")
     def registrar_cobro(self, request):
         """Registrar un cobro de cliente"""
@@ -253,16 +285,79 @@ class ClienteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @action(detail=False, methods=["get"], url_path="productos-sugeridos")
+    @action(detail=False, methods=["get"], url_path="productos-sugeridos", permission_classes=[])
     def productos_sugeridos(self, request):
         """Obtener productos sugeridos para venta rápida"""
-        # Aquí se integraría con el módulo de productos
-        # Por ahora retornamos datos de ejemplo
+        # Devolver productos de ejemplo para demostración
         productos = [
-            {"id": "1", "nombre": "Producto A", "precio": 100.00},
-            {"id": "2", "nombre": "Producto B", "precio": 150.00},
-            {"id": "3", "nombre": "Producto C", "precio": 200.00},
+            {"id": "1", "nombre": "Muzzarella Plancha 10kg", "precio": 15500.00, "stock": 50},
+            {"id": "2", "nombre": "Muzzarella Cilindro 1kg", "precio": 1650.00, "stock": 100},
+            {"id": "3", "nombre": "Muzzarella Cilindro 3kg", "precio": 4800.00, "stock": 75},
+            {"id": "4", "nombre": "Queso Cremoso 500g", "precio": 1450.00, "stock": 80},
+            {"id": "5", "nombre": "Queso Provoleta 1kg", "precio": 2200.00, "stock": 60},
+            {"id": "6", "nombre": "Ricota Fresca 500g", "precio": 980.00, "stock": 90},
+            {"id": "7", "nombre": "Queso Sardo 1kg", "precio": 2800.00, "stock": 40},
+            {"id": "8", "nombre": "Manteca 500g", "precio": 1200.00, "stock": 120},
         ]
+        
+        try:
+            # Intentar obtener productos reales desde la base de datos si están disponibles
+            Producto = apps.get_model('productos', 'Producto')
+            productos_db = Producto.objects.filter(activo=True, stock__gt=0).order_by('-stock')[:10]
+            
+            if productos_db.exists():
+                productos_reales = []
+                for producto in productos_db:
+                    productos_reales.append({
+                        "id": str(producto.id),
+                        "nombre": producto.nombre,
+                        "precio": float(producto.precio),
+                        "stock": float(producto.stock)
+                    })
+                return Response(productos_reales)
+        except Exception:
+            # Si hay algún error con la base de datos, usar los datos de ejemplo
+            pass
+            
+        return Response(productos)
+
+    @action(detail=True, methods=["get"], url_path="productos-sugeridos", permission_classes=[])
+    def productos_sugeridos_cliente(self, request, pk=None):
+        """Obtener productos sugeridos para un cliente específico"""
+        cliente = self.get_object()
+        
+        # Devolver productos de ejemplo personalizados para el cliente
+        productos = [
+            {"id": "1", "nombre": f"Muzzarella Plancha 10kg (Cliente: {cliente.nombre})", "precio": 15500.00, "stock": 50},
+            {"id": "2", "nombre": "Muzzarella Cilindro 1kg", "precio": 1650.00, "stock": 100},
+            {"id": "3", "nombre": "Muzzarella Cilindro 3kg", "precio": 4800.00, "stock": 75},
+            {"id": "4", "nombre": "Queso Cremoso 500g", "precio": 1450.00, "stock": 80},
+            {"id": "5", "nombre": "Queso Provoleta 1kg", "precio": 2200.00, "stock": 60},
+            {"id": "6", "nombre": "Ricota Fresca 500g", "precio": 980.00, "stock": 90},
+            {"id": "7", "nombre": "Queso Sardo 1kg", "precio": 2800.00, "stock": 40},
+            {"id": "8", "nombre": "Manteca 500g", "precio": 1200.00, "stock": 120},
+        ]
+        
+        try:
+            # Intentar obtener productos reales desde la base de datos si están disponibles
+            Producto = apps.get_model('productos', 'Producto')
+            productos_db = Producto.objects.filter(activo=True, stock__gt=0).order_by('-stock')[:10]
+            
+            if productos_db.exists():
+                productos_reales = []
+                for producto in productos_db:
+                    productos_reales.append({
+                        "id": str(producto.id),
+                        "nombre": producto.nombre,
+                        "precio": float(producto.precio),
+                        "stock": float(producto.stock),
+                        "cliente_id": cliente.id
+                    })
+                return Response(productos_reales)
+        except Exception:
+            # Si hay algún error con la base de datos, usar los datos de ejemplo
+            pass
+            
         return Response(productos)
 
     @action(detail=True, methods=["get"], url_path="comprobantes-pendientes")

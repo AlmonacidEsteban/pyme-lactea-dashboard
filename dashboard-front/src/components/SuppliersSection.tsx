@@ -26,6 +26,7 @@ import {
   Eye,
   Users,
   Package,
+  Package2,
   FileText,
   Search
 } from "lucide-react";
@@ -39,6 +40,7 @@ import {
   CronogramaPagos,
   HistorialCompra
 } from '../services/proveedoresService';
+import { productosService, Producto } from '../services/productosService';
 
 export function SuppliersSection() {
   // Estados principales
@@ -56,11 +58,16 @@ export function SuppliersSection() {
   // Estados para formularios y modales
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [mostrarProductos, setMostrarProductos] = useState(false);
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null);
   const [proveedorHistorial, setProveedorHistorial] = useState<Proveedor | null>(null);
+  const [proveedorProductos, setProveedorProductos] = useState<Proveedor | null>(null);
   const [historialCompras, setHistorialCompras] = useState<HistorialCompra[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [loadingProductos, setLoadingProductos] = useState(false);
+  const [productosDisponibles, setProductosDisponibles] = useState<Producto[]>([]);
+  const [productosSeleccionados, setProductosSeleccionados] = useState<number[]>([]);
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -153,10 +160,17 @@ export function SuppliersSection() {
       setMostrarHistorial(true);
       
       const response = await proveedoresService.getHistorialCompras(proveedor.id!);
-      setHistorialCompras(response.results);
+      // Validar que response y response.results existan antes de asignar
+      if (response && response.results && Array.isArray(response.results)) {
+        setHistorialCompras(response.results);
+      } else {
+        console.warn('Respuesta inválida del servicio de historial:', response);
+        setHistorialCompras([]); // Mantener array vacío en caso de respuesta inválida
+      }
     } catch (error) {
       console.error('Error al cargar historial:', error);
       toast.error('Error al cargar historial de compras');
+      setHistorialCompras([]); // Asegurar que historialCompras sea un array vacío en caso de error
     } finally {
       setLoadingHistorial(false);
     }
@@ -223,6 +237,55 @@ export function SuppliersSection() {
     toast.info(`Creando nuevo pedido para ${proveedor.nombre}`);
     // Aquí se podría navegar a la sección de órdenes de compra
     // o abrir un modal para crear una nueva orden
+  };
+
+  const handleGestionarProductos = async (proveedor: Proveedor) => {
+    setProveedorProductos(proveedor);
+    setProductosSeleccionados(proveedor.productos_ids || []);
+    setMostrarProductos(true);
+    await cargarProductosDisponibles();
+  };
+
+  const cargarProductosDisponibles = async () => {
+    try {
+      setLoadingProductos(true);
+      const productos = await productosService.obtenerProductos();
+      setProductosDisponibles(productos);
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      toast.error('Error al cargar productos');
+    } finally {
+      setLoadingProductos(false);
+    }
+  };
+
+  const toggleProductoSeleccionado = (productoId: number) => {
+    setProductosSeleccionados(prev => 
+      prev.includes(productoId) 
+        ? prev.filter(id => id !== productoId)
+        : [...prev, productoId]
+    );
+  };
+
+  const guardarProductosProveedor = async () => {
+    if (!proveedorProductos) return;
+    
+    try {
+      setGuardando(true);
+      await proveedoresService.actualizarProveedor(proveedorProductos.id!, {
+        ...proveedorProductos,
+        productos_ids: productosSeleccionados
+      });
+      
+      toast.success('Productos del proveedor actualizados exitosamente');
+      setMostrarProductos(false);
+      await cargarProveedores();
+    } catch (error) {
+      console.error('Error al actualizar productos del proveedor:', error);
+      toast.error('Error al actualizar productos del proveedor');
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const getReliabilityColor = (reliability: number) => {
@@ -438,6 +501,34 @@ export function SuppliersSection() {
                         <span className="text-xs">{proveedor.direccion}</span>
                       </div>
                     </div>
+
+                    {/* Sección de Productos */}
+                    {proveedor.productos && proveedor.productos.length > 0 && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            Productos ({proveedor.productos.length})
+                          </span>
+                        </div>
+                        <div className="space-y-1 max-h-20 overflow-y-auto">
+                          {proveedor.productos.slice(0, 3).map((producto) => (
+                            <div key={producto.id} className="text-xs text-gray-600 flex items-center justify-between">
+                              <span className="truncate">
+                                {producto.nombre} {producto.sku && `(${producto.sku})`}
+                              </span>
+                              <span className="text-green-600 font-medium ml-2">
+                                ${producto.precio}
+                              </span>
+                            </div>
+                          ))}
+                          {proveedor.productos.length > 3 && (
+                            <div className="text-xs text-gray-500 italic">
+                              +{proveedor.productos.length - 3} más...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
                       <div>
@@ -477,6 +568,14 @@ export function SuppliersSection() {
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Historial
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleGestionarProductos(proveedor)}
+                        title="Gestionar productos del proveedor"
+                      >
+                        <Package2 className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="outline" 
@@ -722,7 +821,7 @@ export function SuppliersSection() {
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : historialCompras.length === 0 ? (
+            ) : !historialCompras || historialCompras.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No hay historial de compras disponible</p>
             ) : (
               <div className="space-y-3">
@@ -761,6 +860,96 @@ export function SuppliersSection() {
                 ))}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de gestión de productos */}
+      <Dialog open={mostrarProductos} onOpenChange={setMostrarProductos}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package2 className="w-5 h-5" />
+              Gestionar Productos - {proveedorProductos?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              Selecciona los productos que vende este proveedor:
+            </div>
+            
+            {loadingProductos ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : productosDisponibles.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No hay productos disponibles</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                {productosDisponibles.map((producto) => (
+                  <div 
+                    key={producto.id} 
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      productosSeleccionados.includes(producto.id!) 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => toggleProductoSeleccionado(producto.id!)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={productosSeleccionados.includes(producto.id!)}
+                        onChange={() => toggleProductoSeleccionado(producto.id!)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-sm">{producto.nombre}</h4>
+                          <span className="text-green-600 font-medium text-sm">
+                            ${producto.precio}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-600 space-y-1">
+                          {producto.sku && (
+                            <div>SKU: {producto.sku}</div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span>Stock: {producto.stock}</span>
+                            <span>•</span>
+                            <span>{producto.marca_nombre}</span>
+                            <span>•</span>
+                            <span>{producto.categoria_nombre}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center pt-4 border-t">
+              <div className="text-sm text-gray-600">
+                {productosSeleccionados.length} producto(s) seleccionado(s)
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setMostrarProductos(false)}
+                  disabled={guardando}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={guardarProductosProveedor}
+                  disabled={guardando}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {guardando ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
