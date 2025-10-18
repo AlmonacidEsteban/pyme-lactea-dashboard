@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
-import { X } from 'lucide-react'; './button';
+import { X } from 'lucide-react';
 
 interface CustomModalProps {
   isOpen: boolean;
@@ -25,26 +25,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
-  // Initialize portal container
+  // Initialize portal container using a stable reference to document.body to avoid DOM removal issues
   useEffect(() => {
-    let container = document.getElementById('dialog-root');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'dialog-root';
-      document.body.appendChild(container);
-    }
-    setPortalContainer(container);
-
-    return () => {
-      // Cleanup: only remove if we created it and it's empty
-      if (container && container.children.length === 0 && container.id === 'dialog-root') {
-        try {
-          document.body.removeChild(container);
-        } catch (error) {
-          // Ignore errors if container was already removed
-        }
-      }
-    };
+    setPortalContainer(document.body);
   }, []);
 
   // Handle escape key

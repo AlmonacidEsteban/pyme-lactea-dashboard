@@ -22,7 +22,7 @@ export const EquiposSection: React.FC = () => {
   const [empleadoModalState, setEmpleadoModalState] = useState({
     isOpen: false,
     equipoId: null as number | null
-  });undefined>(undefined);
+  });
 
   useEffect(() => {
     loadEquipos();
@@ -36,13 +36,18 @@ export const EquiposSection: React.FC = () => {
       const response = await rrhhService.getEquipos();
       console.log('Respuesta de equipos:', response);
       
-      // Asegurar que tenemos un array válido
-      const equiposData = Array.isArray(response.results) ? response.results : [];
+      // Asegurar que tenemos un array válido sin importar la forma de la respuesta
+      const equiposData = Array.isArray(response)
+        ? response
+        : Array.isArray((response as any)?.results)
+          ? (response as any).results
+          : Array.isArray((response as any)?.data)
+            ? (response as any).data
+            : [];
       setEquipos(equiposData);
     } catch (err) {
       console.error('Error loading equipos:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar equipos');
-      // En caso de error, mantener el estado actual en lugar de limpiarlo
     } finally {
       setLoading(false);
     }
@@ -114,53 +119,33 @@ export const EquiposSection: React.FC = () => {
 
   // Estado para recordar el modal principal cuando se abre el modal de empleado
   const [previousDialogState, setPreviousDialogState] = useState<typeof dialogState | null>(null);
+  const [refreshEmpleadosCounter, setRefreshEmpleadosCounter] = useState(0);
 
   const handleOpenEmpleadoModal = useCallback((equipoId?: number) => {
-    // Guardar el estado actual del modal principal
-    setPreviousDialogState(dialogState);
-    
-    // Cerrar el modal principal temporalmente
-    setDialogState({
-      isOpen: false,
-      selectedEquipo: null,
-      isSubmitting: false
-    });
-    
-    // Abrir el modal de empleado
+    // Mantener el modal principal abierto y abrir el de empleado
     setEmpleadoModalState({
       isOpen: true,
-      equipoId: equipoId || null
+      equipoId: equipoId ?? dialogState.selectedEquipo?.id ?? null,
     });
-  }, [dialogState]);
+  }, [dialogState.selectedEquipo]);
 
   const handleCloseEmpleadoModal = useCallback(() => {
     setEmpleadoModalState({
       isOpen: false,
-      equipoId: null
+      equipoId: null,
     });
-    
-    // Restaurar el modal principal si estaba abierto
-    if (previousDialogState && previousDialogState.isOpen) {
-      setDialogState(previousDialogState);
-    }
-    setPreviousDialogState(null);
-  }, [previousDialogState]);
+  }, []);
 
   const handleEmpleadoCreated = useCallback(async () => {
     setEmpleadoModalState({
       isOpen: false,
-      equipoId: null
+      equipoId: null,
     });
-    
-    // Recargar la lista de equipos para actualizar los miembros
+    // Recargar equipos para actualizar métricas
     await loadEquipos();
-    
-    // Restaurar el modal principal si estaba abierto
-    if (previousDialogState && previousDialogState.isOpen) {
-      setDialogState(previousDialogState);
-    }
-    setPreviousDialogState(null);
-  }, [loadEquipos, previousDialogState]);
+    // Forzar recarga de empleados en el formulario de equipo
+    setRefreshEmpleadosCounter((c) => c + 1);
+  }, [loadEquipos]);
 
   if (loading) {
     return (
@@ -336,19 +321,18 @@ export const EquiposSection: React.FC = () => {
               onCancel={handleCancelForm} 
               isLoading={dialogState.isSubmitting} 
               onOpenEmpleadoModal={handleOpenEmpleadoModal} 
+              refreshEmpleadosCounter={refreshEmpleadosCounter}
             /> 
           </DialogContent> 
         </Dialog>
 
         {/* Modal para crear empleados - Separado para evitar anidación */}
-        {empleadoModalState.isOpen && (
-          <EmpleadoModal
-            isOpen={empleadoModalState.isOpen}
-            onClose={handleCloseEmpleadoModal}
-            onEmpleadoCreated={handleEmpleadoCreated}
-            equipoId={empleadoModalState.equipoId}
-          />
-        )}
+        <EmpleadoModal
+          isOpen={empleadoModalState.isOpen}
+          onClose={handleCloseEmpleadoModal}
+          onEmpleadoCreated={handleEmpleadoCreated}
+          equipoId={empleadoModalState.equipoId}
+        />
       </div>
     );
   };

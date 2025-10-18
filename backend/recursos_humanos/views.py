@@ -139,6 +139,10 @@ class EquipoViewSet(viewsets.ModelViewSet):
                     lider = Empleado.objects.get(id=lider_id)
                     equipo.lider = lider
                     equipo.save()
+                    # Asegurar que el líder también pertenezca al equipo
+                    if lider.equipo_id != equipo.id:
+                        lider.equipo = equipo
+                        lider.save()
                 except Empleado.DoesNotExist:
                     pass
             
@@ -164,7 +168,7 @@ class EquipoViewSet(viewsets.ModelViewSet):
             
             # Extraer datos de líder y miembros
             lider_id = self.request.data.get('lider_id')
-            miembros_ids = self.request.data.get('miembros_ids', [])
+            miembros_ids = self.request.data.get('miembros_ids', None)
             
             # Actualizar el equipo
             equipo = serializer.save()
@@ -174,21 +178,31 @@ class EquipoViewSet(viewsets.ModelViewSet):
                 try:
                     lider = Empleado.objects.get(id=lider_id)
                     equipo.lider = lider
+                    # Asegurar que el líder también pertenezca al equipo
+                    if lider.equipo_id != equipo.id:
+                        lider.equipo = equipo
+                        lider.save()
                 except Empleado.DoesNotExist:
                     equipo.lider = None
             else:
                 equipo.lider = None
             equipo.save()
             
-            # Actualizar miembros - primero remover todos los miembros actuales
-            Empleado.objects.filter(equipo=equipo).update(equipo=None)
-            
-            # Luego asignar los nuevos miembros
-            if miembros_ids:
-                empleados = Empleado.objects.filter(id__in=miembros_ids)
-                for empleado in empleados:
-                    empleado.equipo = equipo
-                    empleado.save()
+            # Actualizar miembros solo si se envía miembros_ids en la solicitud
+            if miembros_ids is not None:
+                # Primero remover todos los miembros actuales, preservando al líder si existe
+                lider_actual = equipo.lider
+                qs_remover = Empleado.objects.filter(equipo=equipo)
+                if lider_actual:
+                    qs_remover = qs_remover.exclude(id=lider_actual.id)
+                qs_remover.update(equipo=None)
+                
+                # Luego asignar los nuevos miembros
+                if miembros_ids:
+                    empleados = Empleado.objects.filter(id__in=miembros_ids)
+                    for empleado in empleados:
+                        empleado.equipo = equipo
+                        empleado.save()
             
             AuditoriaEquipo.objects.create(
                 equipo=equipo,

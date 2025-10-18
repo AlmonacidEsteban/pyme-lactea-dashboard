@@ -166,13 +166,26 @@ export function EmpleadoModal({ isOpen, onClose, onEmpleadoCreated, equipoId }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Agregar Nuevo Empleado</DialogTitle>
-          <DialogDescription>
-            Complete la información del nuevo empleado para agregarlo al equipo.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto px-6 pb-4">
+        <div className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b px-6 py-3">
+          <div className="flex w-full items-center gap-3 md:flex-nowrap justify-between">
+            <DialogHeader className="p-0 m-0 min-w-0 flex-1">
+              <DialogTitle>Agregar Nuevo Empleado</DialogTitle>
+              <DialogDescription>
+                Complete la información del nuevo empleado para agregarlo al equipo.
+              </DialogDescription>
+            </DialogHeader>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-700 text-black hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 focus:outline-none px-6 py-2 text-sm sm:text-base font-bold ml-auto shrink-0"
+              form="empleado-form"
+            >
+              {isLoading ? 'Guardando...' : 'Guardar Empleado'}
+            </Button>
+          </div>
+        </div>
         <form id="empleado-form" onSubmit={handleSubmit} className="space-y-6">
           {errors.general && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -411,25 +424,29 @@ export function EmpleadoModal({ isOpen, onClose, onEmpleadoCreated, equipoId }: 
           </Card>
 
         </form>
-        
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+      </div>
+      
+      <div className="sticky bottom-0 left-0 right-0 flex-shrink-0 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 w-full flex flex-nowrap items-center justify-between gap-3 p-4 px-6 border-t-2 border-gray-300 shadow-md min-h-[56px] z-[60]">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={isLoading}
+            className="px-6 shrink-0"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
             disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-700 text-black hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 focus:outline-none px-8 py-2.5 text-base font-bold shrink-0 ml-auto"
             form="empleado-form"
           >
             {isLoading ? 'Guardando...' : 'Guardar Empleado'}
           </Button>
         </div>
+      
+        {/* Eliminado botón flotante global en portal para evitar conflictos de stacking */}
       </DialogContent>
     </Dialog>
   );

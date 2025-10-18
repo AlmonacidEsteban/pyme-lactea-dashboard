@@ -17,6 +17,7 @@ interface EquipoFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   onOpenEmpleadoModal: (equipoId?: number) => void;
+  refreshEmpleadosCounter?: number;
 }
 
 const tiposEquipo = [
@@ -28,7 +29,7 @@ const tiposEquipo = [
   { value: 'mantenimiento', label: 'Mantenimiento' },
 ];
 
-export function EquipoForm({ equipo, onSubmit, onCancel, isLoading = false, onOpenEmpleadoModal }: EquipoFormProps) {
+export function EquipoForm({ equipo, onSubmit, onCancel, isLoading = false, onOpenEmpleadoModal, refreshEmpleadosCounter = 0 }: EquipoFormProps) {
   const [formData, setFormData] = useState<CreateEquipoData>({
     nombre: '',
     descripcion: '',
@@ -45,6 +46,11 @@ export function EquipoForm({ equipo, onSubmit, onCancel, isLoading = false, onOp
   useEffect(() => {
     loadEmpleados();
   }, []);
+
+  // Recargar empleados cuando se cree uno nuevo desde el modal
+  useEffect(() => {
+    loadEmpleados();
+  }, [refreshEmpleadosCounter]);
 
   useEffect(() => {
     if (equipo) {
